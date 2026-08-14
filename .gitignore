@@ -1,7 +1,8 @@
-.idea/
+.its/dea/
 .venv/
 __pycache__/
 *.pyc
 logs/
 outputs/
-reports/
+repor
+data/
