@@ -81,3 +81,9 @@ class TestLiveAndReplay:
 
         with allure.step("验证 UI5 云回看视频是否出图"):
             assert self.cloud_page.wait_for_stream_loaded(), "云视频播放出图失败！"
+
+            # ---- 步骤 4: 回到首页 ----
+            with allure.step("返回首页"):
+                self.sdcard_ext_page.click_back_to_live()
+                self.live_page.click_back_to_home()
+                self.home_page.ensure_back_to_home()
