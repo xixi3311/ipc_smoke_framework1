@@ -2,10 +2,10 @@
 
 # ----------------- 测试设备参数配置 -----------------
 # APP 首页展示的设备名称（用于精准定位和点击卡片，例如 "5556测AOV"）
-DEVICE_NAME = "0627测"
+DEVICE_NAME = "4560测"
 
 # 设备序列号 / sn（如 5801703758022）
-DEVICE_SN = "5801238510627"
+DEVICE_SN = "5801170554560"
 
 class SerialConfig:
     PORT = "COM4"  # 串口号（如 COM8 或 /dev/ttyUSB0）
@@ -33,7 +33,7 @@ PREVIEW_TIMEOUT = 30
 APP_PACKAGE = "com.xc.sv360"
 
 # ----------------- 设备配网（热点绑定）配置 -----------------
-WIFI_SSID = "360-WiFi"                 # 路由器WiFi名称（请修改为实际SSID）
+WIFI_SSID = "TP-LINK_D130"                 # 路由器WiFi名称（请修改为实际SSID）
 WIFI_PASSWORD = "admin123"          # 路由器WiFi密码
 DEVICE_DISPLAY_NAME = "0627测"     # 绑定后显示的设备名称（可与DEVICE_NAME相同）
 
@@ -62,3 +62,16 @@ MODE_SWITCH_WAIT_TIME = {
 
 # 结果 Excel 导出目录
 OUTPUT_RESULTS_DIR = "outputs/results"
+
+# ----------------- 设备信息校验配置 -----------------
+# WiFi 设备有线 MAC 地址
+DEVICE_MAC_ADDRESS = "2C:6F:51:3C:40:5A"
+
+# 4G 设备 ICCID 卡号
+DEVICE_ICCID = "8986032442201721523"
+
+# 电量持久化文件路径
+BATTERY_STATE_FILE = "data/battery_state.json"
+
+# 允许的最大电量差值（%）
+MAX_BATTERY_DELTA = 10
