@@ -8,17 +8,29 @@ from locators.first_page_locator.home_locator import HomeLocators
 
 class HomePage(BasePage):
 
-    # ---------------- 首页状态判断与安全返回 ----------------
+    # ---------------- 首页判断与安全返回 ----------------
     def is_on_home_page(self) -> bool:
-        """精准判断当前页面是否处于【设备首页】"""
-        header_add_exist = self._is_element_visible(*HomeLocators.Home_TOP_PLUS_BTN)
-
+        """
+        判断当前页面是否处于设备首页（宽松判断）
+        满足以下任一条件即认为是首页：
+        1. 底部"设备"Tab 被选中（最可靠）
+        2. 顶部"所有设备"标题存在
+        3. 加号按钮存在（兜底）
+        """
+        # 1. 检查底部"设备"Tab 是否被选中（最可靠）
         device_tab = self.driver(text="设备")
-        is_device_tab_selected = False
-        if device_tab.exists:
-            is_device_tab_selected = device_tab.info.get("selected", False)
+        if device_tab.exists and device_tab.info.get("selected", False):
+            return True
 
-        return header_add_exist and is_device_tab_selected
+        # 2. 检查顶部的"所有设备"标题（注意：_is_element_visible 需要两个参数）
+        if self._is_element_visible('xpath', "//*[@resource-id='com.xc.sv360:id/tvAllDevice']"):
+            return True
+
+        # 3. 降级：检查加号按钮是否存在
+        if self._is_element_visible(*HomeLocators.Home_TOP_PLUS_BTN):
+            return True
+
+        return False
 
     def ensure_back_to_home(self, max_retries=3) -> bool:
         """【强力安全保障】：确保应用切回到设备首页"""

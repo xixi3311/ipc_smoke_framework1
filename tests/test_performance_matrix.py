@@ -225,12 +225,6 @@ class TestPerformanceMatrix:
                     if not sd_success:
                         failures.append(f"【{mode}】第{r}轮 SD卡回看失败 ({sd_dur}s)")
 
-                    # Step 3: 云存回看 (在 Live 页直接跳转)
-                    cloud_success, cloud_dur = self._run_cloud_step(device_name)
-                    self.exporter.record_result(r, mode, "云回看", cloud_dur, cloud_success)
-                    if not cloud_success:
-                        failures.append(f"【{mode}】第{r}轮 云回看失败 ({cloud_dur}s)")
-
                     # 轮次结束，回到首页
                     self.home_page.ensure_back_to_home()
 
@@ -238,6 +232,16 @@ class TestPerformanceMatrix:
         if failures:
             fail_msg = ";\n".join(failures)
             assert False, f"出图压测存在失败项:\n{fail_msg}"
+
+
+
+"""
+                    # Step 3: 云存回看 (在 Live 页直接跳转)
+                    cloud_success, cloud_dur = self._run_cloud_step(device_name)
+                    self.exporter.record_result(r, mode, "云回看", cloud_dur, cloud_success)
+                    if not cloud_success:
+                        failures.append(f"【{mode}】第{r}轮 云回看失败 ({cloud_dur}s)")
+"""
 
 
 

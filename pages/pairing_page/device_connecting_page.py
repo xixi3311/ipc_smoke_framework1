@@ -1,7 +1,8 @@
-# pages/pairing/device_connecting_page.py
+# pages/pairing_page/device_connecting_page.py
 import time
 from pages.base_page import BasePage
 from locators.pairing_locator.device_connecting_locator import DeviceConnectingLocators
+
 
 class DeviceConnectingPage(BasePage):
     """设备联网中界面 (UI8)"""
@@ -17,27 +18,40 @@ class DeviceConnectingPage(BasePage):
 
     def wait_for_result(self, timeout=180) -> tuple:
         """
-        等待配网结果
+        等待配网结果，同时检测以下状态：
+        - 如果进入设备名称设置页 (UI9) → 配网成功
+        - 如果进入添加失败页 (UI10) → 配网失败
+        - 如果一直在联网中 (UI8) → 持续等待直到超时
         :return: (success: bool, error_msg: str)
         """
         self.logger.info(f"等待配网结果，最长 {timeout} 秒...")
         start = time.time()
-        # 轮询检测是否进入成功页面（设备名称）或失败页面
+
         from pages.pairing_page.device_name_page import DeviceNamePage
         from pages.pairing_page.add_failure_page import AddFailurePage
+
         device_name_page = DeviceNamePage(self.driver)
         failure_page = AddFailurePage(self.driver)
 
         while time.time() - start < timeout:
+            # 1. 检查是否进入设备名称设置页 (UI9) → 成功
             if device_name_page.is_on_device_name_page():
-                self.logger.info("配网成功，进入设备名称设置页")
+                self.logger.info("配网成功，已进入设备名称设置页 (UI9)")
                 return True, ""
+
+            # 2. 检查是否进入添加失败页 (UI10) → 失败
             if failure_page.is_on_failure_page():
-                self.logger.warning("配网失败，进入添加失败页")
+                self.logger.warning("配网失败，进入添加失败页 (UI10)")
                 return False, "添加失败"
-            # 检查是否仍在联网中页面
-            if not self.is_on_connecting_page(timeout=2):
-                self.logger.warning("页面跳转异常，可能已经退出联网页")
-            time.sleep(1)
+
+            # 3. 检查是否仍在联网中页面 (UI8)
+            if self.is_on_connecting_page(timeout=2):
+                self.logger.debug("仍在设备联网中页面 (UI8)，继续等待...")
+                time.sleep(0.5)
+                continue
+
+            # 4. 如果既不在联网页，也不在名称页，也不在失败页
+            #    可能是页面切换间隙，短暂等待后继续
+            time.sleep(0.3)
 
         return False, "配网超时"
