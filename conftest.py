@@ -1,28 +1,27 @@
-# conftest.py
+# conftest.py（原始版本，放在 exe 外部）
+import os
+import sys
+import time
+from datetime import datetime
 import pytest
 import uiautomator2 as u2
 import allure
 import io
 import config
-import os
-import time
-from datetime import datetime
-from utils.serial_monitor import SerialMonitor
-import sys
+import allure_pytest  #  显式导入 allure-pytest 插件
 
-# 导入所有 Page 类（按页面分层引入）
+# 导入所有 Page 类
 from pages.first_page.home_page import HomePage
 from pages.second_page.live_page import LivePage
 from pages.third_page.cloud_replay_page import CloudReplayPage
 from pages.third_page.sdcard_replay_page import SdCardReplayPage
 from pages.third_page.setting_page import SettingsPage
+from utils.serial_monitor import SerialMonitor
 
 # ============  强制锁定工作目录到项目根目录 ============
-# 这行代码确保无论你在哪个目录下执行 pytest，所有相对路径（logs/、outputs/、reports/）
-# 都会创建在 conftest.py 所在的根目录下，而不会跑到 tests/ 底下。
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 os.chdir(PROJECT_ROOT)
-sys.path.insert(0, PROJECT_ROOT)  # 顺带确保导入路径也稳
+sys.path.insert(0, PROJECT_ROOT)
 # =====================================================
 
 
@@ -30,14 +29,12 @@ sys.path.insert(0, PROJECT_ROOT)  # 顺带确保导入路径也稳
 def serial_logger():
     """全局自动开启串口日志，整个测试 Session 期间持续抓取"""
     monitor = SerialMonitor()
-    #  不传参数，自动按 device_serial_YYYYMMDD_HHMMSS.log 命名
     monitor.start_logging()
 
-    yield monitor  # 把 monitor 对象注入给用例使用
+    yield monitor
 
-    monitor.stop_logging()  # 测试结束后关闭串口
+    monitor.stop_logging()
 
-    # 附加到 Allure 报告附件
     if monitor.current_log_path and os.path.exists(monitor.current_log_path):
         try:
             log_filename = os.path.basename(monitor.current_log_path)
@@ -63,9 +60,7 @@ def driver():
 @pytest.fixture(autouse=True)
 def init_pages(request, driver):
     """
-    【方案 A 核心支持】
-    自动为每个测试类 (TestClass) 注入 driver 和所有的 Page 对象实例，
-    使得在测试用例中可以直接通过 self.live_page、self.settings_page 等进行显式分步调用。
+    自动为每个测试类注入 driver 和所有的 Page 对象实例
     """
     if request.cls:
         request.cls.driver = driver
@@ -85,11 +80,9 @@ def pytest_runtest_makereport(item, call):
     outcome = yield
     report = outcome.get_result()
 
-    # 仅在用例执行 (call) 阶段且失败时触发
     if report.when == "call" and report.failed:
         driver_obj = None
 
-        # 1. 获取 driver 实例
         if item.instance:
             if hasattr(item.instance, "driver"):
                 driver_obj = item.instance.driver
@@ -99,41 +92,36 @@ def pytest_runtest_makereport(item, call):
         if not driver_obj and "driver" in item.funcargs:
             driver_obj = item.funcargs["driver"]
 
-        # 2. 执行精准命名落盘 + Allure 挂载
         if driver_obj:
             try:
-                # 精确到毫秒的时间戳：20260725_110530_123
                 now_str = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
                 date_folder = datetime.now().strftime("%Y%m%d")
 
-                # 创建按日期隔离的截图目录
                 save_dir = os.path.join("logs", "screenshots", date_folder)
                 os.makedirs(save_dir, exist_ok=True)
 
-                # 清理用例名称中的特殊字符，防止路径报错
                 clean_item_name = item.name.replace("[", "_").replace("]", "_")
 
-                # 规范文件名：fail_用例名_20260725_110530_123.png
                 file_name = f"fail_{clean_item_name}_{now_str}.png"
                 img_path = os.path.join(save_dir, file_name)
 
-                # u2 保存本地文件
                 driver_obj.screenshot(img_path)
 
-                # 格式化时间用于 Allure 报告展示
                 display_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
 
-                # 挂载到 Allure 附件（标题直接带时间戳，一目了然）
                 allure.attach.file(
                     img_path,
                     name=f"❌ 失败现场截图 [{clean_item_name}] - 时间: {display_time}",
                     attachment_type=allure.attachment_type.PNG
                 )
                 print(f"\n[conftest] 📸 失败截图已生成: {img_path}")
-                print(f"[conftest] ⏱️ 报错精确时间点: {display_time} (可直接在串口/APP Log中搜索此时间)")
+                print(f"[conftest] ⏱️ 报错精确时间点: {display_time}")
 
             except Exception as e:
                 print(f"\n[conftest] ❌ 截图挂载失败: {e}")
+
+
+
 
 
 
