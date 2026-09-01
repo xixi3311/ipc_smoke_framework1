@@ -167,20 +167,23 @@ class DeviceInfoPage(BasePage):
 
     # ================= 4. 电量差值校验 =================
 
-    def _load_battery_state(self, device_sn: str) -> Optional[int]:
-        """从 JSON 文件加载指定设备的上一轮电量"""
+    def _load_battery_state(self, device_sn: str) -> Optional[dict]:
+        """
+        从 JSON 文件加载指定设备的电量数据
+        :return: {'last_battery': 85, 'last_update': '2026-09-01 10:00:00'} 或 None
+        """
         if not os.path.exists(self.battery_file):
             self.logger.info("电量状态文件不存在，首次运行")
             return None
         try:
             with open(self.battery_file, 'r', encoding='utf-8') as f:
                 data = json.load(f)
-            last_battery = data.get(device_sn, {}).get("last_battery")
-            if last_battery is not None:
-                self.logger.info(f"读取到设备 {device_sn} 上一轮电量: {last_battery}%")
-            else:
+            device_data = data.get(device_sn)
+            if device_data is None:
                 self.logger.info(f"设备 {device_sn} 无历史电量记录")
-            return last_battery
+                return None
+            self.logger.info(f"读取到设备 {device_sn} 电量数据: {device_data}")
+            return device_data
         except Exception as e:
             self.logger.warning(f"读取电量状态文件失败: {e}")
             return None
@@ -204,22 +207,51 @@ class DeviceInfoPage(BasePage):
             self.logger.warning(f"保存电量状态失败: {e}")
 
     def verify_battery_delta(self, current_battery: int, device_sn: str) -> Tuple[bool, int, Optional[int]]:
-        """校验电量差值是否超过阈值"""
+        """
+        校验电量差值是否超过阈值
+        1. 无历史数据 → 只记录，不校验
+        2. 有历史数据但超过 2 小时 → 视为失效，只记录，不校验
+        3. 有历史数据且在 2 小时内 → 对比差值
+        """
         if current_battery < 0:
             self.logger.warning("当前电量获取失败，跳过差值校验")
             return True, 0, None
 
-        last_battery = self._load_battery_state(device_sn)
+        device_data = self._load_battery_state(device_sn)
 
-        if last_battery is None:
+        # 情况1：无历史数据
+        if device_data is None:
             self.logger.info(f"首次获取设备 {device_sn} 电量: {current_battery}%，跳过差值校验")
             self._save_battery_state(device_sn, current_battery)
             return True, 0, None
 
+        # 情况2：检查数据是否过期（超过 2 小时）
+        last_update_str = device_data.get("last_update")
+        last_battery = device_data.get("last_battery")
+
+        if last_update_str:
+            try:
+                from datetime import datetime
+                last_update = datetime.strptime(last_update_str, "%Y-%m-%d %H:%M:%S")
+                now = datetime.now()
+                hours_diff = (now - last_update).total_seconds() / 3600
+
+                # ⏰ 超过 2 小时，数据失效
+                if hours_diff > 2:
+                    self.logger.info(
+                        f"设备 {device_sn} 电量数据已过期（上次更新: {last_update_str}，距今 {hours_diff:.1f} 小时），"
+                        f"跳过差值校验，更新为当前电量 {current_battery}%"
+                    )
+                    self._save_battery_state(device_sn, current_battery)
+                    return True, 0, None
+            except Exception as e:
+                self.logger.warning(f"解析时间失败: {e}，继续使用旧数据")
+
+        # 情况3：有效历史数据，对比差值
         delta = abs(current_battery - last_battery)
         max_delta = config.MAX_BATTERY_DELTA
 
-        self.logger.info(f"电量对比: 当前 {current_battery}% vs 上一轮 {last_battery}%，差值 {delta}%")
+        self.logger.info(f"设备 {device_sn} 电量对比: 当前 {current_battery}% vs 上一轮 {last_battery}%，差值 {delta}%")
 
         if delta <= max_delta:
             self.logger.info(f"✅ 电量差值 {delta}% ≤ {max_delta}%，校验通过")

@@ -74,13 +74,20 @@ class TestDelete:
         # ========== 5. 最终断言 ==========
         assert removed, f"设备 [{device_name}] 仍在首页列表中，删除失败"
 
-        # ========== 6. 提示后续操作 ==========
+        # ========== 6. ⚠️ 关键：等待设备进入待配网状态 ==========
+        with allure.step("等待设备完全解绑并进入待配网状态（60 秒）"):
+            print("[Test] ⏳ 等待设备完全解绑并进入待配网状态（60 秒）...")
+            print("[Test] ⚠️ 设备已删除，下一轮绑定需等待设备进入待配网状态")
+            time.sleep(60)
+            print("[Test] ✅ 设备应已进入待配网状态，可进行下一轮绑定")
+
+        # ========== 7. 提示后续操作 ==========
         allure.attach(
-            "设备已删除，如需继续测试请重新绑定设备",
+            "设备已删除，已等待 60 秒进入待配网状态，可执行下一轮绑定",
             name="⚠️ 提示",
             attachment_type=allure.attachment_type.TEXT
         )
-        print("[Test] ⚠️ 设备已删除，如需继续测试请重新绑定")
+        print("[Test] ⚠️ 设备已删除，可执行下一轮绑定")
 
     def _verify_device_removed(self, device_name: str) -> bool:
         """验证设备已从首页列表移除"""

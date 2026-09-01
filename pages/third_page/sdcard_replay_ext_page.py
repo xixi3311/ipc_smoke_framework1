@@ -121,12 +121,13 @@ class SdCardReplayExtPage(SdCardReplayPage):
         """
         随机点击 count 个事件，通过加载转圈消失或'录像已播完'判定出图
         如果实际可点击事件少于 count，则全部点击并验证
+        如果列表为空，返回 True（无事件不算失败，上层应继续遍历）
         """
         self._wait_for_event_list_populated(timeout=5)
         items = self._get_event_items()
         if len(items) == 0:
-            self.logger.warning("当前列表无事件可点击")
-            return False
+            self.logger.warning("当前列表无事件可点击，跳过该类型")
+            return True  # ✅ 无事件不算失败，继续遍历下一个类型
 
         # 实际点击数量：取 count 和可用数量的较小值
         actual_count = min(count, len(items))
