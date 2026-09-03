@@ -49,7 +49,7 @@ class LivePage(BasePage):
                     print(f"[LivePage] ✅ Live 画面加载成功！真实出图耗时: {duration} 秒")
 
                     # 👁️ 额外停留 2 秒供人工目测确认真实画面（不计入出图耗时）
-                    print("[LivePage] 👁️ 停留 2.0 秒以便目测确认出图画面...")
+                    print("[LivePage]  停留 2.0 秒以便目测确认出图画面...")
                     time.sleep(2.0)
 
                     return True, duration

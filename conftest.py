@@ -40,7 +40,7 @@ def serial_logger():
             log_filename = os.path.basename(monitor.current_log_path)
             allure.attach.file(
                 monitor.current_log_path,
-                name=f"📜 设备串口日志 ({log_filename})",
+                name=f" 设备串口日志 ({log_filename})",
                 attachment_type=allure.attachment_type.TEXT
             )
         except Exception as e:
@@ -114,8 +114,8 @@ def pytest_runtest_makereport(item, call):
                     name=f"❌ 失败现场截图 [{clean_item_name}] - 时间: {display_time}",
                     attachment_type=allure.attachment_type.PNG
                 )
-                print(f"\n[conftest] 📸 失败截图已生成: {img_path}")
-                print(f"[conftest] ⏱️ 报错精确时间点: {display_time}")
+                print(f"\n[conftest] 🟢 失败截图已生成: {img_path}")
+                print(f"[conftest] 🟢 报错精确时间点: {display_time}")
 
             except Exception as e:
                 print(f"\n[conftest] ❌ 截图挂载失败: {e}")

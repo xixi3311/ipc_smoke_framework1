@@ -4,9 +4,10 @@ Remove-Item -Recurse -Force build, dist, IPCAutoTest.spec
 ## 打包命令
 pyinstaller --onefile --console --name="IPCAutoTest" --add-data="tests;tests" --add-data="pages;pages" --add-data="locators;locators" --add-data="utils;utils" --add-data="pytest.ini;." --add-data="config.py;." --add-data="conftest.py;." --hidden-import=pytest --hidden-import=_pytest --hidden-import=pluggy --hidden-import=logging.handlers --hidden-import=allure_pytest --hidden-import=allure --hidden-import=allure_commons --hidden-import=allure_commons.logger --hidden-import=allure_commons._allure --hidden-import=allure_commons.types --hidden-import=allure_commons.utils --hidden-import=uiautomator2 --hidden-import=uiautomator2.xpath --hidden-import=serial --hidden-import=serial.tools.list_ports --hidden-import=pandas --hidden-import=openpyxl --collect-all=allure_pytest --collect-all=allure --collect-all=uiautomator2 --collect-all=pyserial --collect-all=pandas --collect-all=openpyxl run.py  
 
----
+## 调试
+./run_smoke.ps1
 
-## 复制以下全部内容，保存为 `README.md`
+---
 
 ```markdown
 # IPC 自动化冒烟测试框架

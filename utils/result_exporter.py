@@ -38,6 +38,6 @@ class PerformanceResultExporter:
         try:
             df = pd.DataFrame(self.records)
             df.to_excel(self.excel_path, index=False, engine='openpyxl')
-            print(f"[Exporter] 📊 性能数据已实时同步至: {self.excel_path}")
+            print(f"[Exporter]  性能数据已实时同步至: {self.excel_path}")
         except Exception as e:
             print(f"[Exporter Err] ❌ 保存 Excel 失败: {e}")

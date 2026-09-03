@@ -52,7 +52,7 @@ class WorkModePage(BasePage):
                 except Exception as e:
                     print(f"[WorkModePage] ⚠️ 解析 id={tv_id} 节点失败: {e}")
 
-        print(f"[WorkModePage] 🔍 动态扫描到的当前设备支持的工作模式: {list(detected_modes.keys())}")
+        print(f"[WorkModePage]  动态扫描到的当前设备支持的工作模式: {list(detected_modes.keys())}")
         return detected_modes
 
     def get_available_modes(self) -> List[str]:
@@ -64,7 +64,7 @@ class WorkModePage(BasePage):
         """
         【精准击中逻辑】点击对应模式右侧 RadioButton，并校验 checked 属性
         """
-        print(f"[WorkModePage] 🎯 准备切换工作模式为: 『{mode_name}』...")
+        print(f"[WorkModePage]  准备切换工作模式为: 『{mode_name}』...")
 
         modes_map = self.scan_device_modes()
         if mode_name not in modes_map:
@@ -76,12 +76,12 @@ class WorkModePage(BasePage):
 
         # 1. 已是选中状态直接返回
         if radio_btn.exists and radio_btn.info.get("checked", False):
-            print(f"[WorkModePage] ℹ️ 模式『{mode_name}』当前处于选中状态，无需重复点击")
+            print(f"[WorkModePage]  模式『{mode_name}』当前处于选中状态，无需重复点击")
             return True
 
         # 2. 尝试精准点击
         for attempt in range(1, max_retries + 1):
-            print(f"[WorkModePage] 👆 尝试第 {attempt} 次点击 RadioButton ({cb_id})...")
+            print(f"[WorkModePage]  尝试第 {attempt} 次点击 RadioButton ({cb_id})...")
 
             if radio_btn.exists:
                 radio_btn.click()

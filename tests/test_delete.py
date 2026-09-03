@@ -46,7 +46,7 @@ class TestDelete:
 
         # ========== 2. 串口日志检测设备解绑日志 ==========
         with allure.step("串口日志检测设备解绑/停止上报日志"):
-            print("[Test] ⏳ 检测串口日志中的设备解绑记录...")
+            print("[Test]  检测串口日志中的设备解绑记录...")
             keywords = [device_sn, "unbind", "logout", "device offline"]
             found = False
             for kw in keywords:
@@ -76,7 +76,7 @@ class TestDelete:
 
         # ========== 6. ⚠️ 关键：等待设备进入待配网状态 ==========
         with allure.step("等待设备完全解绑并进入待配网状态（60 秒）"):
-            print("[Test] ⏳ 等待设备完全解绑并进入待配网状态（60 秒）...")
+            print("[Test]  等待设备完全解绑并进入待配网状态（60 秒）...")
             print("[Test] ⚠️ 设备已删除，下一轮绑定需等待设备进入待配网状态")
             time.sleep(60)
             print("[Test] ✅ 设备应已进入待配网状态，可进行下一轮绑定")

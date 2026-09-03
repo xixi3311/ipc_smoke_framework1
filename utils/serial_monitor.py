@@ -30,7 +30,7 @@ class SerialMonitor:
         """
         os.makedirs(SerialConfig.LOG_DIR, exist_ok=True)
 
-        # 📌 优雅的动态文件名生成逻辑（参考 OTA 脚本模式）
+        #  动态文件名生成逻辑（参考 OTA 脚本模式）
         if not log_name:
             time_str = datetime.now().strftime("%Y%m%d_%H%M%S")
             log_name = f"device_serial_{time_str}.log"
@@ -124,7 +124,7 @@ class SerialMonitor:
             print("[Serial Err] ❌ 发送命令失败，串口未连接！")
             return ""
 
-        print(f"[Serial CMD] 🚀 执行命令: {cmd}")
+        print(f"[Serial CMD]  执行命令: {cmd}")
         self.ensure_logged_in(timeout=3)
 
         with self._lock:
@@ -145,7 +145,7 @@ class SerialMonitor:
 
     def reboot_device(self, ready_timeout=SerialConfig.READY_TIMEOUT) -> bool:
         """下发 reboot 命令并等待系统再次完全就绪"""
-        print("[Serial] 🔄 正在下发重启命令 reboot...")
+        print("[Serial] 🟢 正在下发重启命令 reboot...")
         self.send_cmd(SerialConfig.REBOOT_COMMAND, timeout=2)
 
         start_time = time.time()

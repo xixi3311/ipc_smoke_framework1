@@ -52,8 +52,8 @@ class TestPerformanceMatrix:
                 name=f"❌ {step_name} - 时间: {display_time}",
                 attachment_type=allure.attachment_type.PNG
             )
-            print(f"\n[Biz] 📸 失败截图已生成: {img_path}")
-            print(f"[Biz] ⏱️ 报错精确时间点: {display_time}")
+            print(f"\n[Biz] 🟢 失败截图已生成: {img_path}")
+            print(f"[Biz]  报错精确时间点: {display_time}")
         except Exception as e:
             print(f"[Biz] ⚠️ 截图挂载失败: {e}")
 
@@ -61,7 +61,7 @@ class TestPerformanceMatrix:
     def _run_live_step(self, device_name, max_retries=3):
         """Live 预览出图测试，失败自动重试"""
         for attempt in range(1, max_retries + 1):
-            print(f"[Biz] 🎬 Live 预览出图测试 (尝试 {attempt}/{max_retries})...")
+            print(f"[Biz]  Live 预览出图测试 (尝试 {attempt}/{max_retries})...")
             self.home_page.ensure_back_to_home()
             self.home_page.click_play_button(device_name)
 
@@ -84,7 +84,7 @@ class TestPerformanceMatrix:
     def _run_sdcard_step(self, device_name, max_retries=3):
         """SD 卡回看出图测试，失败自动重试"""
         for attempt in range(1, max_retries + 1):
-            print(f"[Biz] 💾 SD 卡回看出图测试 (尝试 {attempt}/{max_retries})...")
+            print(f"[Biz]  SD 卡回看出图测试 (尝试 {attempt}/{max_retries})...")
             self.live_page.click_card_playback()
 
             start_t = time.time()
@@ -93,14 +93,14 @@ class TestPerformanceMatrix:
 
             if success:
                 time.sleep(1.0)
-                print("[Biz] ↩️ 从卡回看按 Back 退回 Live...")
+                print("[Biz]  从卡回看按 Back 退回 Live...")
                 self.driver.press("back")
                 time.sleep(1.0)
                 return True, duration
 
             print(f"[Biz] ⚠️ SD 卡回看第 {attempt}/{max_retries} 次尝试失败 (耗时 {duration}s)")
             if attempt < max_retries:
-                print("[Biz] ↩️ 退回 Live 准备重试...")
+                print("[Biz]  退回 Live 准备重试...")
                 self.driver.press("back")
                 time.sleep(1.0)
 
@@ -112,12 +112,12 @@ class TestPerformanceMatrix:
     def _run_cloud_step(self, device_name, max_retries=3):
         """云存回看出图测试，失败自动重试"""
         for attempt in range(1, max_retries + 1):
-            print(f"[Biz] ☁️ 云存回看出图测试 (尝试 {attempt}/{max_retries})...")
+            print(f"[Biz]  云存回看出图测试 (尝试 {attempt}/{max_retries})...")
             self.live_page.click_cloud_playback()
             time.sleep(1.0)
 
             if self.cloud_page.is_on_cloud_list_page():
-                print("[Biz] 🎯 当前在 UI4 列表页，点击第一个事件跳转至 UI5 播放页...")
+                print("[Biz]  当前在 UI4 列表页，点击第一个事件跳转至 UI5 播放页...")
                 self.cloud_page.click_first_event_item()
             else:
                 print("[Biz] ⚠️ 未能识别到 UI4 列表界面，尝试兜底二次点击...")
@@ -128,7 +128,7 @@ class TestPerformanceMatrix:
 
             if success:
                 time.sleep(1.0)
-                print("[Biz] ↩️ 退回 Live 界面...")
+                print("[Biz] ↩ 退回 Live 界面...")
                 self.driver.press("back")
                 time.sleep(0.8)
                 if not self.live_page.is_on_live_page():
@@ -138,7 +138,7 @@ class TestPerformanceMatrix:
 
             print(f"[Biz] ⚠️ 云存回看第 {attempt}/{max_retries} 次尝试失败 (耗时 {duration}s)")
             if attempt < max_retries:
-                print("[Biz] ↩️ 退回 Live 准备重试...")
+                print("[Biz] ↩ 退回 Live 准备重试...")
                 self.driver.press("back")
                 time.sleep(0.8)
                 if not self.live_page.is_on_live_page():
@@ -172,7 +172,7 @@ class TestPerformanceMatrix:
 
         modes_map = self.work_mode_page.scan_device_modes()
         available_modes = list(modes_map.keys())
-        print(f"[Biz] 📋 扫描到可用工作模式: {available_modes}")
+        print(f"[Biz]  扫描到可用工作模式: {available_modes}")
         self.home_page.ensure_back_to_home()
 
         # 2. 模式遍历压测
@@ -198,7 +198,7 @@ class TestPerformanceMatrix:
             time.sleep(0.5)
             self.home_page.ensure_back_to_home()
 
-            print(f"\n[Biz] ⏳ 模式【{mode}】切换完成，回首页静置等待生效: {wait_time} 秒...")
+            print(f"\n[Biz] 🟢 模式【{mode}】切换完成，回首页静置等待生效: {wait_time} 秒...")
             time.sleep(wait_time)
 
             # B. 压测轮次
@@ -207,7 +207,7 @@ class TestPerformanceMatrix:
                     print(f"\n[Biz] 🔄 >>> 开始 【{mode}】 第 {r}/{rounds} 轮测试 <<<")
 
                     # 每轮开始前：确保设备处于休眠/待机状态（Live 冷启动唤醒的前提）
-                    print(f"[Biz] 💤 第 {r} 轮开始前，回首页静置等待设备休眠: {wait_time} 秒...")
+                    print(f"[Biz]  第 {r} 轮开始前，回首页静置等待设备休眠: {wait_time} 秒...")
                     self.home_page.ensure_back_to_home()
                     time.sleep(wait_time)
 

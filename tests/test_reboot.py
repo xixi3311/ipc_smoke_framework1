@@ -82,10 +82,10 @@ class TestReboot:
         # ========== 5. 如果出图失败，通过串口执行 reboot 恢复 ==========
         if not success:
             with allure.step("出图失败，通过串口执行 reboot 命令恢复"):
-                print("[Test] 🔧 通过串口执行 reboot 命令恢复设备...")
+                print("[Test] 🟢 通过串口执行 reboot 命令恢复设备...")
                 serial_logger.send_cmd("reboot", timeout=2)
                 time.sleep(10)
-                print("[Test] ⏳ 等待设备重新启动（90 秒）...")
+                print("[Test]  等待设备重新启动（90 秒）...")
                 time.sleep(90)
                 self.home_page.ensure_back_to_home()
                 if self._try_live_stream(device_name, timeout=20):
@@ -119,7 +119,7 @@ class TestReboot:
     def _verify_live_stream(self, device_name: str, serial_logger) -> bool:
         """尝试预览出图，最多重试 MAX_RETRY 次"""
         for attempt in range(self.MAX_RETRY + 1):
-            print(f"[Test] 🔄 第 {attempt + 1}/{self.MAX_RETRY + 1} 次尝试预览出图...")
+            print(f"[Test]  第 {attempt + 1}/{self.MAX_RETRY + 1} 次尝试预览出图...")
 
             status = self.home_page.check_device_offline_status(device_name)
             if status.get("is_offline", False):
@@ -145,7 +145,7 @@ class TestReboot:
                 return True
 
             if attempt < self.MAX_RETRY:
-                print(f"[Test] ⏳ 出图失败，等待 {self.RETRY_INTERVAL} 秒后重试...")
+                print(f"[Test]  出图失败，等待 {self.RETRY_INTERVAL} 秒后重试...")
                 time.sleep(self.RETRY_INTERVAL)
 
         return False
