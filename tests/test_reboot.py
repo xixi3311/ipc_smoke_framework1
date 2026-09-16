@@ -33,6 +33,8 @@ class TestReboot:
         # ========== 1. 进入设置并执行重启 ==========
         with allure.step(f"进入设备 [{device_name}] Live 预览"):
             self.home_page.click_play_button(device_name)
+            self.live_page.kill_app_if_loading_stuck()
+            self.home_page.click_play_button(device_name)
             self.live_page.wait_for_stream_loaded()
 
         with allure.step("进入设备设置页"):
@@ -110,6 +112,14 @@ class TestReboot:
             if status.get("is_offline", False):
                 return False
             self.home_page.click_play_button(device_name)
+
+            # ========== 新增：兜底检测加载中卡死 ==========
+            if not self.live_page.kill_app_if_loading_stuck(max_wait=120):
+                # 如果触发了杀APP，需要重新点击播放
+                self.home_page.click_play_button(device_name)
+                if not self.live_page.kill_app_if_loading_stuck(max_wait=120):
+                    return False
+
             time.sleep(2)
             return self.live_page.wait_for_stream_loaded(timeout=timeout)
         except Exception as e:

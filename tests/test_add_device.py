@@ -14,6 +14,8 @@ from pages.pairing_page.system_wlan_page import SystemWlanPage
 from pages.pairing_page.device_connecting_page import DeviceConnectingPage
 from pages.pairing_page.device_name_page import DeviceNamePage
 from pages.pairing_page.add_failure_page import AddFailurePage
+from pages.pairing_page.device_confirm_page import DeviceConfirmPage
+from pages.base_page import BasePage
 
 
 @allure.epic("IPC 自动化测试框架")
@@ -36,6 +38,7 @@ class TestAddDevice:
         self.failure_page = AddFailurePage(driver)
         # 确保回到首页
         self.home_page.ensure_back_to_home()
+        self.device_confirm_page = DeviceConfirmPage(driver)
 
     @allure.story("设备绑定完整流程（WiFi / 4G 统一入口）")
     @pytest.mark.smoke
@@ -80,17 +83,29 @@ class TestAddDevice:
         # ========================================
 
         with allure.step("等待配网完成（最长180秒）"):
-            #assert self.connecting_page.is_on_connecting_page(timeout=10), "未进入设备联网页面" success, error_msg = self.connecting_page.wait_for_result(timeout=180)
-
-            # ✅ 直接调用 wait_for_result，它会自动检测 UI8/UI9/UI10
             success, error_msg = self.connecting_page.wait_for_result(timeout=180)
 
+            # ✅ 已添加场景：不算失败，走阶段3.5
+            if success and error_msg == "already_added":
+                with allure.step("检测到设备已添加提示"):
+                    self.device_confirm_page.click_know()
+                    self.home_page.ensure_back_to_home()
+                    device_names = self.home_page.get_current_screen_device_names()
+                    assert device_name in device_names, f"设备 {device_name} 未在首页列表中找到"
+                    return
+
             if not success:
-                # 如果失败，处理失败页面
                 if self.failure_page.is_on_failure_page():
                     self.failure_page.click_retry()
                     self.home_page.ensure_back_to_home()
                 pytest.fail(f"配网失败: {error_msg}")
+
+
+
+
+
+        # 给页面过渡留点时间
+        time.sleep(1)
 
         # ========================================
         # 阶段 4: 配网成功 → 设备名称设置

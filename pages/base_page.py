@@ -9,6 +9,30 @@ class BasePage:
         self.driver = driver
         self.logger = get_logger(self.__class__.__name__)
 
+    def kill_app_if_loading_stuck(self, max_wait=120):
+        """
+        检测"加载中"弹窗，如果超过 max_wait 秒还在，杀 APP 重启
+        返回 True: 加载正常消失；False: 超时已杀 APP
+        """
+        start = time.time()
+        while time.time() - start < max_wait:
+            # 检测加载中弹窗（ui12 的 XML 特征）
+            loading = self.driver(resourceId="com.xc.sv360:id/tvTitle", text="加载中")
+            if not loading.exists:
+                return True
+            time.sleep(2)
+
+        # 超时，强制杀 APP 重启
+        print(f"[BasePage] ⚠️ 加载中超过 {max_wait} 秒，强制停止 APP 并重启")
+        self.driver.app_stop(config.APP_PACKAGE)
+        time.sleep(2)
+        self.driver.app_start(config.APP_PACKAGE)
+        time.sleep(5)
+        # 确保回到首页
+        from pages.first_page.home_page import HomePage
+        HomePage(self.driver).ensure_back_to_home()
+        return False
+
     def launch_app(self, stop=False):
         """重新启动或拉起应用"""
         print(f"[BasePage] 正在拉起应用: {config.APP_PACKAGE}")

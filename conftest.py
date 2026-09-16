@@ -17,6 +17,7 @@ from pages.third_page.cloud_replay_page import CloudReplayPage
 from pages.third_page.sdcard_replay_page import SdCardReplayPage
 from pages.third_page.setting_page import SettingsPage
 from utils.serial_monitor import SerialMonitor
+from utils.result_exporter import PerformanceResultExporter
 
 # ============  强制锁定工作目录到项目根目录 ============
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
@@ -79,6 +80,47 @@ def pytest_runtest_makereport(item, call):
     """
     outcome = yield
     report = outcome.get_result()
+
+    # ===== 新增：所有用例统一记录结果（性能压测用例除外，它自己在测试文件里记更详细）=====
+    if report.when == "call":
+        round_num = int(os.environ.get('CURRENT_ROUND', 1))
+        exporter = PerformanceResultExporter()
+
+        nodeid = item.nodeid
+        # 性能压测用例自己记录详细数据（含工作模式），这里跳过避免重复
+        if "test_performance_matrix" not in nodeid:
+            # 识别测试类型
+            if "test_add_device" in nodeid:
+                test_type = "设备绑定"
+            elif "test_delete" in nodeid:
+                test_type = "设备删除"
+            elif "test_reboot" in nodeid:
+                test_type = "设备重启"
+            elif "test_device_info" in nodeid:
+                test_type = "信息校验"
+            elif "test_sdcard_retrieval" in nodeid:
+                test_type = "卡回看检索"
+            elif "test_live_and_replay" in nodeid:
+                test_type = "Live/回看"
+            else:
+                test_type = "其他"
+
+            duration = getattr(report, 'duration', 0)
+            success = report.outcome == "passed"
+            remark = ""
+            if not success and report.longrepr:
+                remark = str(report.longrepr)[:500]
+
+            exporter.record_result(
+                round_num=round_num,
+                test_type=test_type,
+                mode="-",                     # 非性能用例没有工作模式
+                biz_type=item.name,           # 用例方法名
+                duration=duration,
+                success=success,
+                remark=remark
+            )
+    # ===== 新增结束 =====
 
     if report.when == "call" and report.failed:
         driver_obj = None
