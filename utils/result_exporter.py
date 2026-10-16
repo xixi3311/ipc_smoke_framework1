@@ -153,17 +153,29 @@ class PerformanceResultExporter:
             worksheet.column_dimensions[column_letter].width = adjusted_width
 
     def _build_summary(self):
-        """生成总计、轮次和测试类型统计"""
+        """生成总计和测试类型统计"""
 
         # PASS、FAIL、SKIP 分开统计，SKIP 不计入失败数
-        passed = sum(1 for record in self.records if record.get("测试结果") == "PASS")
-        failed = sum(1 for record in self.records if record.get("测试结果") == "FAIL")
-        skipped = sum(1 for record in self.records if record.get("测试结果") == "SKIP")
+        passed = sum(
+            1 for record in self.records
+            if record.get("测试结果") == "PASS"
+        )
+        failed = sum(
+            1 for record in self.records
+            if record.get("测试结果") == "FAIL"
+        )
+        skipped = sum(
+            1 for record in self.records
+            if record.get("测试结果") == "SKIP"
+        )
         total = len(self.records)
 
         # 成功率只按实际执行的 PASS + FAIL 计算
         executed = passed + failed
-        success_rate = f"{passed / executed * 100:.1f}%" if executed else "N/A"
+        success_rate = (
+            f"{passed / executed * 100:.1f}%"
+            if executed else "N/A"
+        )
 
         summary = [
             {"统计项": "设备名称", "值": config.DEVICE_NAME},
@@ -174,41 +186,22 @@ class PerformanceResultExporter:
             {"统计项": "⏭️ SKIP", "值": skipped},
             {"统计项": "成功率", "值": success_rate},
             {"统计项": "错误次数", "值": len(self.errors)},
-            {"统计项": "最后更新时间", "值": datetime.now().strftime("%Y-%m-%d %H:%M:%S")}
+            {
+                "统计项": "最后更新时间",
+                "值": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            }
         ]
-
-        # 按轮次汇总
-        rounds = {}
-        for record in self.records:
-            round_name = record.get("测试轮次", "未知")
-            if round_name not in rounds:
-                rounds[round_name] = {"pass": 0, "fail": 0, "skip": 0}
-
-            result = record.get("测试结果")
-            if result == "PASS":
-                rounds[round_name]["pass"] += 1
-            elif result == "FAIL":
-                rounds[round_name]["fail"] += 1
-            elif result == "SKIP":
-                rounds[round_name]["skip"] += 1
-
-        for round_name, stats in sorted(rounds.items(), key=lambda item: item[0]):
-            executed = stats["pass"] + stats["fail"]
-            rate = f"{stats['pass'] / executed * 100:.1f}%" if executed else "N/A"
-            summary.append({
-                "统计项": f"  {round_name}",
-                "值": (
-                    f"✅ {stats['pass']} / ❌ {stats['fail']} / "
-                    f"⏭️ {stats['skip']} ({rate})"
-                )
-            })
 
         # 按测试类型汇总
         types = {}
         for record in self.records:
             test_type = record.get("测试类型", "未知")
             if test_type not in types:
-                types[test_type] = {"pass": 0, "fail": 0, "skip": 0}
+                types[test_type] = {
+                    "pass": 0,
+                    "fail": 0,
+                    "skip": 0
+                }
 
             result = record.get("测试结果")
             if result == "PASS":
@@ -220,7 +213,10 @@ class PerformanceResultExporter:
 
         for test_type, stats in sorted(types.items()):
             executed = stats["pass"] + stats["fail"]
-            rate = f"{stats['pass'] / executed * 100:.1f}%" if executed else "N/A"
+            rate = (
+                f"{stats['pass'] / executed * 100:.1f}%"
+                if executed else "N/A"
+            )
             summary.append({
                 "统计项": f"  {test_type}",
                 "值": (

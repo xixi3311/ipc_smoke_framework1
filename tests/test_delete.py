@@ -66,10 +66,12 @@ class TestDelete:
         with allure.step("验证设备已从首页列表中移除"):
             removed = self._verify_device_removed(device_name)
 
+
         # ========== 4. 返回首页 ==========
         with allure.step("返回首页"):
-            self.home_page.ensure_back_to_home()
+#           self.home_page.ensure_back_to_home()
             print("[Test] ✅ 已返回首页")
+
 
         # ========== 5. 最终断言 ==========
         assert removed, f"设备 [{device_name}] 仍在首页列表中，删除失败"
@@ -90,14 +92,28 @@ class TestDelete:
         print("[Test] ⚠️ 设备已删除，可执行下一轮绑定")
 
     def _verify_device_removed(self, device_name: str) -> bool:
-        """验证设备已从首页列表移除"""
-        self.home_page.ensure_back_to_home()
+        """等待删除操作自动返回首页，并验证设备已从列表移除"""
+
+        # 删除确认后等待 App 自动返回首页，不额外点击底部 Tab
+        home_wait = 15
+        start = time.time()
+
+        while time.time() - start < home_wait:
+            if self.home_page.is_on_home_page():
+                break
+            time.sleep(0.5)
+        else:
+            raise AssertionError("设备删除后未能自动返回设备首页")
+
         time.sleep(2)
 
+        # 在首页轮询设备列表，确认目标设备已移除
         max_wait = 30
         start = time.time()
+
         while time.time() - start < max_wait:
             device_names = self.home_page.get_current_screen_device_names()
+
             if device_name not in device_names:
                 print(f"[Test] ✅ 设备 [{device_name}] 已从首页移除")
                 allure.attach(
@@ -106,6 +122,7 @@ class TestDelete:
                     attachment_type=allure.attachment_type.TEXT
                 )
                 return True
+
             time.sleep(2)
             self.driver.swipe_ext("down", scale=0.3)
 
