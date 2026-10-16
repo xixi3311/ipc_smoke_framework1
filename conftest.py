@@ -1,14 +1,13 @@
 # conftest.py（原始版本，放在 exe 外部）
+# 全局 fixture、页面初始化、测试结果监听和失败截图处理
 import os
 import sys
-import time
 from datetime import datetime
 import pytest
 import uiautomator2 as u2
 import allure
-import io
+import allure_pytest
 import config
-import allure_pytest  #  显式导入 allure-pytest 插件
 
 # 导入所有 Page 类
 from pages.first_page.home_page import HomePage
@@ -19,7 +18,8 @@ from pages.third_page.setting_page import SettingsPage
 from utils.serial_monitor import SerialMonitor
 from utils.result_exporter import PerformanceResultExporter
 
-# ============  强制锁定工作目录到项目根目录 ============
+
+# ============ 强制锁定工作目录到项目根目录 ============
 PROJECT_ROOT = os.path.dirname(os.path.abspath(__file__))
 os.chdir(PROJECT_ROOT)
 sys.path.insert(0, PROJECT_ROOT)
@@ -28,7 +28,7 @@ sys.path.insert(0, PROJECT_ROOT)
 
 @pytest.fixture(scope="session", autouse=True)
 def serial_logger():
-    """全局自动开启串口日志，整个测试 Session 期间持续抓取"""
+    """全局自动开启串口日志，整个测试 Session 期间持续采集"""
     monitor = SerialMonitor()
     monitor.start_logging()
 
@@ -41,11 +41,11 @@ def serial_logger():
             log_filename = os.path.basename(monitor.current_log_path)
             allure.attach.file(
                 monitor.current_log_path,
-                name=f" 设备串口日志 ({log_filename})",
+                name=f"设备串口日志 ({log_filename})",
                 attachment_type=allure.attachment_type.TEXT
             )
         except Exception as e:
-            print(f"[conftest] ❌ 串口日志附加至 Allure 失败: {e}")
+            print(f"[conftest] 串口日志附加到 Allure 失败: {e}")
 
 
 @pytest.fixture(scope="session")
@@ -60,9 +60,8 @@ def driver():
 
 @pytest.fixture(autouse=True)
 def init_pages(request, driver):
-    """
-    自动为每个测试类注入 driver 和所有的 Page 对象实例
-    """
+    """自动为每个测试类注入 driver 和所有 Page 对象实例"""
+
     if request.cls:
         request.cls.driver = driver
         request.cls.home_page = HomePage(driver)
@@ -75,92 +74,151 @@ def init_pages(request, driver):
 @pytest.hookimpl(tryfirst=True, hookwrapper=True)
 def pytest_runtest_makereport(item, call):
     """
-    Pytest 钩子：监听用例执行状态
-    当用例失败时，记录用例名称与时间戳，保存本地并挂载 Allure 附件
+    Pytest 钩子：监听用例执行状态。
+    记录 PASS、FAIL 和 SKIP；失败时生成截图；
+    同时把测试用例提供的说明写入 Excel 备注。
     """
     outcome = yield
     report = outcome.get_result()
 
-    # ===== 新增：所有用例统一记录结果（性能压测用例除外，它自己在测试文件里记更详细）=====
-    if report.when == "call":
-        round_num = int(os.environ.get('CURRENT_ROUND', 1))
-        exporter = PerformanceResultExporter()
+    # 所有普通用例统一记录结果，性能压测用例由自身记录
+    if report.when == "call" and "test_performance_matrix" not in item.nodeid:
+        # run.py / loop_run.py 每轮启动前写入当前轮次
+        round_num = int(os.environ.get("CURRENT_ROUND", "1"))
 
+        # 识别测试类型
         nodeid = item.nodeid
-        # 性能压测用例自己记录详细数据（含工作模式），这里跳过避免重复
-        if "test_performance_matrix" not in nodeid:
-            # 识别测试类型
-            if "test_add_device" in nodeid:
-                test_type = "设备绑定"
-            elif "test_delete" in nodeid:
-                test_type = "设备删除"
-            elif "test_reboot" in nodeid:
-                test_type = "设备重启"
-            elif "test_device_info" in nodeid:
-                test_type = "信息校验"
-            elif "test_sdcard_retrieval" in nodeid:
-                test_type = "卡回看检索"
-            elif "test_live_and_replay" in nodeid:
-                test_type = "Live/回看"
+        if "test_add_device" in nodeid:
+            test_type = "设备绑定"
+        elif "test_delete" in nodeid:
+            test_type = "设备删除"
+        elif "test_reboot" in nodeid:
+            test_type = "设备重启"
+        elif "test_device_info" in nodeid:
+            test_type = "信息校验"
+        elif "test_sdcard_retrieval" in nodeid:
+            test_type = "卡回看检索"
+        elif "test_live_and_replay" in nodeid:
+            test_type = "Live/回看"
+        else:
+            test_type = "其他"
+
+        # pytest 的跳过状态单独记录，不能按失败处理
+        if report.outcome == "passed":
+            status = "PASS"
+        elif report.outcome == "skipped":
+            status = "SKIP"
+        else:
+            status = "FAIL"
+
+        remark = ""
+
+        # 失败原因或跳过原因先写入备注
+        if status in ("FAIL", "SKIP") and report.longrepr:
+            remark = str(report.longrepr)[:500]
+
+        # 测试方法可通过 self.result_remark 提供业务说明
+        instance_remark = getattr(
+            item.instance,
+            "result_remark",
+            ""
+        )
+
+        if instance_remark:
+            if remark:
+                remark = f"{remark}；{instance_remark}"
             else:
-                test_type = "其他"
+                remark = instance_remark
 
-            duration = getattr(report, 'duration', 0)
-            success = report.outcome == "passed"
-            remark = ""
-            if not success and report.longrepr:
-                remark = str(report.longrepr)[:500]
+        exporter = PerformanceResultExporter()
+        exporter.record_result(
+            round_num=round_num,
+            test_type=test_type,
+            mode="-",
+            biz_type=item.name,
+            duration=getattr(report, "duration", 0),
+            status=status,
+            remark=remark
+        )
 
-            exporter.record_result(
+        # 只有真正失败的用例才写入错误详情
+        if status == "FAIL":
+            exporter.record_error(
                 round_num=round_num,
                 test_type=test_type,
-                mode="-",                     # 非性能用例没有工作模式
-                biz_type=item.name,           # 用例方法名
-                duration=duration,
-                success=success,
-                remark=remark
+                test_case=item.name,
+                error_msg=remark
             )
-    # ===== 新增结束 =====
 
-    if report.when == "call" and report.failed:
+    # setup 或用例执行阶段失败时截图；跳过的用例不截图
+    if report.failed and report.when in ("setup", "call"):
         driver_obj = None
+        test_instance = getattr(item, "instance", None)
 
-        if item.instance:
-            if hasattr(item.instance, "driver"):
-                driver_obj = item.instance.driver
-            elif hasattr(item.instance, "home_page") and hasattr(item.instance.home_page, "driver"):
-                driver_obj = item.instance.home_page.driver
+        if test_instance:
+            if hasattr(test_instance, "driver"):
+                driver_obj = test_instance.driver
+            elif (
+                hasattr(test_instance, "home_page")
+                and hasattr(test_instance.home_page, "driver")
+            ):
+                driver_obj = test_instance.home_page.driver
 
-        if not driver_obj and "driver" in item.funcargs:
-            driver_obj = item.funcargs["driver"]
+        # setup 阶段失败时，测试类实例可能还没有 driver
+        if not driver_obj:
+            funcargs = getattr(item, "funcargs", {})
+            driver_obj = funcargs.get("driver")
 
-        if driver_obj:
-            try:
-                now_str = datetime.now().strftime("%Y%m%d_%H%M%S_%f")[:-3]
-                date_folder = datetime.now().strftime("%Y%m%d")
+        if not driver_obj:
+            print(
+                f"\n[conftest] {report.when} 阶段失败，"
+                "当前没有可用 driver，无法生成截图"
+            )
+            return
 
-                save_dir = os.path.join("logs", "screenshots", date_folder)
-                os.makedirs(save_dir, exist_ok=True)
+        try:
+            now_str = datetime.now().strftime(
+                "%Y%m%d_%H%M%S_%f"
+            )[:-3]
+            date_folder = datetime.now().strftime("%Y%m%d")
 
-                clean_item_name = item.name.replace("[", "_").replace("]", "_")
+            # 使用 config.PROJECT_ROOT，避免打包时写入 _MEI 临时目录
+            save_dir = os.path.join(
+                config.PROJECT_ROOT,
+                "logs",
+                "screenshots",
+                date_folder
+            )
+            os.makedirs(save_dir, exist_ok=True)
 
-                file_name = f"fail_{clean_item_name}_{now_str}.png"
-                img_path = os.path.join(save_dir, file_name)
+            clean_item_name = (
+                item.name
+                .replace("[", "_")
+                .replace("]", "_")
+            )
+            file_name = f"fail_{clean_item_name}_{now_str}.png"
+            img_path = os.path.join(save_dir, file_name)
 
-                driver_obj.screenshot(img_path)
+            driver_obj.screenshot(img_path)
 
-                display_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")[:-3]
+            display_time = datetime.now().strftime(
+                "%Y-%m-%d %H:%M:%S.%f"
+            )[:-3]
 
-                allure.attach.file(
-                    img_path,
-                    name=f"❌ 失败现场截图 [{clean_item_name}] - 时间: {display_time}",
-                    attachment_type=allure.attachment_type.PNG
-                )
-                print(f"\n[conftest] 🟢 失败截图已生成: {img_path}")
-                print(f"[conftest] 🟢 报错精确时间点: {display_time}")
+            allure.attach.file(
+                img_path,
+                name=(
+                    f"失败现场截图 [{clean_item_name}] "
+                    f"- 时间: {display_time}"
+                ),
+                attachment_type=allure.attachment_type.PNG
+            )
 
-            except Exception as e:
-                print(f"\n[conftest] ❌ 截图挂载失败: {e}")
+            print(f"\n[conftest] 失败截图已生成: {img_path}")
+            print(f"[conftest] 报错精确时间点: {display_time}")
+
+        except Exception as e:
+            print(f"\n[conftest] 截图保存或挂载失败: {e}")
 
 
 

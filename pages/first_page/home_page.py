@@ -101,9 +101,86 @@ class HomePage(BasePage):
 
     # ---------------- 播放与菜单操作 ----------------
     def click_play_button(self, device_name: str) -> bool:
-        """点击指定设备卡片中间的 ▶️ 播放按钮"""
-        print(f"[HomePage] 点击设备 [{device_name}] 画面中央的 ▶️ 播放按钮")
-        return self.safe_click(HomeLocators.get_play_btn_by_device_name(device_name))
+        """
+        点击指定设备卡片中间的播放按钮。
+
+        原来的问题：
+
+        1. 点击一次后没有确认是否进入 Live 页面；
+        2. 点击失败时直接返回，后续代码继续执行；
+        3. 设备卡片正在刷新时，XPath 可能暂时找不到按钮；
+        4. 播放按钮点击无效时，后续仍然继续检测 Live 页面。
+
+        新逻辑：
+
+        1. 先滑动查找播放按钮；
+        2. 最多点击 3 次；
+        3. 每次点击后确认 Live 页面是否出现；
+        4. 未进入 Live 页面时才允许重试；
+        5. 最终失败才返回 False。
+        """
+
+        from pages.second_page.live_page import LivePage
+
+        print(
+            f"[HomePage] 点击设备 [{device_name}] "
+            "画面中央的 ▶️ 播放按钮"
+        )
+
+        locator = HomeLocators.get_play_btn_by_device_name(
+            device_name
+        )
+
+        # 设备列表可能发生滚动，先确保播放按钮进入屏幕
+        if not self.scroll_into_view(
+                locator,
+                max_swipes=5,
+                direction="up",
+        ):
+            print(
+                f"[HomePage] 未找到设备 [{device_name}] 的播放按钮"
+            )
+            return False
+
+        for attempt in range(1, 4):
+            print(
+                f"[HomePage] 播放按钮点击，第 {attempt}/3 次"
+            )
+
+            # 单次点击失败时，进入下一次重试
+            clicked = self.safe_click(
+                locator,
+                timeout=5,
+                auto_scroll=False,
+                retries=1,
+            )
+
+            if not clicked:
+                time.sleep(1)
+                continue
+
+            # 点击后必须确认 Live 页面出现
+            live_page = LivePage(self.driver)
+
+            if live_page.wait_until(
+                    live_page.is_on_live_page,
+                    timeout=8,
+            ):
+                print("[HomePage] 已成功进入 Live 页面")
+                return True
+
+            # 点击成功但页面没有跳转，可能是点击没有真正生效
+            print(
+                "[HomePage] 点击播放后未进入 Live 页面，"
+                "准备重试"
+            )
+            time.sleep(1)
+
+        print(
+            f"[HomePage] 多次点击播放仍未进入 Live 页面: "
+            f"{device_name}"
+        )
+        return False
 
     def click_device_more_menu(self, device_name: str) -> bool:
         """点击指定设备卡片右下角的 '⋮' 按钮"""

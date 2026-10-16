@@ -267,9 +267,7 @@ allure open ./reports/allure-report
 
 
 ## 维护者
-
-- 自动化测试团队
-
+冯俊翔
 
 ## 更新日志
 

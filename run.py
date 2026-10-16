@@ -139,7 +139,7 @@ print("=" * 70)
 print(f"\n项目目录: {BASE_DIR}")
 print(f"Allure 报告: {allure_dir}\n")
 
-if getattr(sys, 'frozen', False):
+if getattr(sys, "frozen", False):
     import pytest
     pytest_log = os.path.join(BASE_DIR, "logs", "pytest_run.log")
     os.makedirs(os.path.dirname(pytest_log), exist_ok=True)
@@ -151,13 +151,14 @@ if getattr(sys, 'frozen', False):
             "-v",
             f"--alluredir={allure_dir}",
             "-p", "allure_pytest",
-            f"--log-file={pytest_log}",      # 强制 pytest 日志写到正确位置
+            f"--log-file={pytest_log}",
             "--log-file-format=[%(asctime)s] %(message)s",
             "--log-file-date-format=%H:%M:%S",
         ]
         return pytest.main(args)
 else:
     import subprocess
+
     def run_tests():
         cmd = [
             sys.executable, "-m", "pytest",
@@ -166,13 +167,17 @@ else:
             "-v",
             f"--alluredir={allure_dir}"
         ]
-        result = subprocess.run(cmd)
+        result = subprocess.run(cmd, env=os.environ.copy())
         return result.returncode
 
+
 for i in range(1, rounds + 1):
-    print(f"\n{'='*50}")
+    print(f"\n{'=' * 50}")
     print(f"  第 {i} / {rounds} 轮开始")
-    print(f"{'='*50}\n")
+    print(f"{'=' * 50}\n")
+
+    # 每轮开始前更新环境变量，conftest.py 用它记录真实轮次
+    os.environ["CURRENT_ROUND"] = str(i)
 
     result = run_tests()
 

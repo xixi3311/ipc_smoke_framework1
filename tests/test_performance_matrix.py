@@ -201,19 +201,29 @@ class TestPerformanceMatrix:
             print(f"\n[Biz] 🟢 模式【{mode}】切换完成，回首页静置等待生效: {wait_time} 秒...")
             time.sleep(wait_time)
 
+            # 读取 run.py 设置的当前冒烟轮次
+            current_round = int(os.environ.get("CURRENT_ROUND", "1"))
+
             # B. 压测轮次
             for r in range(1, rounds + 1):
                 with allure.step(f"模式【{mode}】 - 第 {r}/{rounds} 轮压测"):
                     print(f"\n[Biz] 🔄 >>> 开始 【{mode}】 第 {r}/{rounds} 轮测试 <<<")
 
                     # 每轮开始前：确保设备处于休眠/待机状态（Live 冷启动唤醒的前提）
-                    print(f"[Biz]  第 {r} 轮开始前，回首页静置等待设备休眠: {wait_time} 秒...")
+                    print(f"[Biz] 第 {r} 轮开始前，回首页静置等待设备休眠: {wait_time} 秒...")
                     self.home_page.ensure_back_to_home()
                     time.sleep(wait_time)
 
                     # Step 1: Live 预览 (冷启动唤醒)
                     live_success, live_dur = self._run_live_step(device_name)
-                    self.exporter.record_result(r, mode, "Live预览", live_dur, live_success)
+                    self.exporter.record_result(
+                        round_num=current_round,
+                        test_type="出图性能",
+                        mode=mode,
+                        biz_type="Live预览",
+                        duration=live_dur,
+                        success=live_success
+                    )
                     if not live_success:
                         failures.append(f"【{mode}】第{r}轮 Live 预览失败 ({live_dur}s)")
                         self.home_page.ensure_back_to_home()
@@ -221,7 +231,14 @@ class TestPerformanceMatrix:
 
                     # Step 2: SD 卡回看 (在 Live 页直接跳转，设备已被唤醒，无需再等休眠)
                     sd_success, sd_dur = self._run_sdcard_step(device_name)
-                    self.exporter.record_result(r, mode, "SD卡回看", sd_dur, sd_success)
+                    self.exporter.record_result(
+                        round_num=current_round,
+                        test_type="出图性能",
+                        mode=mode,
+                        biz_type="SD卡回看",
+                        duration=sd_dur,
+                        success=sd_success
+                    )
                     if not sd_success:
                         failures.append(f"【{mode}】第{r}轮 SD卡回看失败 ({sd_dur}s)")
 
