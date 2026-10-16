@@ -105,6 +105,32 @@ class SettingsPage(BasePage):
         work_mode_page.click_back()
         return modes
 
+    # ================= 摄像机设置入口 =================
+    def is_camera_settings_entry_visible(self) -> bool:
+        return self._is_element_present(
+            *SettingsLocators.ENTRY_CAMERA_SETTINGS
+        )
+
+    def click_camera_settings_entry(self) -> bool:
+        print("[SettingsPage] 查找并点击摄像机设置入口")
+
+        if not self.scroll_into_view(
+            SettingsLocators.ENTRY_CAMERA_SETTINGS,
+            max_swipes=5,
+            direction="up"
+        ):
+            return False
+
+        if not self._is_element_present(
+            *SettingsLocators.TV_CAMERA_SETTINGS
+        ):
+            return False
+
+        return self.safe_click(
+            SettingsLocators.ENTRY_CAMERA_SETTINGS,
+            auto_scroll=False
+        )
+
 
 
 

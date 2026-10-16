@@ -39,6 +39,10 @@ class SettingsLocators:
     # 工作模式页顶部的返回按键
     BTN_BACK = ('xpath', "//android.widget.ImageButton | //*[@resource-id='com.xc.sv360:id/left_img']")
 
+    # 摄像机设置入口
+    TV_CAMERA_SETTINGS = ('xpath', "//*[@text='摄像机设置']")
+    ENTRY_CAMERA_SETTINGS = ('id', f'{PKG}:id/cameraSettingRel')
+
 
 
 
