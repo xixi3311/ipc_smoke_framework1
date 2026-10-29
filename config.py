@@ -24,7 +24,7 @@ SMOKE_ROUND_INTERVAL = 10   # 下一轮需要等待的秒数
 
 
 # ----------------- 测试设备参数配置 -----------------
-DEVICE_NAME = "摄像机"       # 设备绑定后的名称
+DEVICE_NAME = "3656测"       # 设备绑定后的名称
 DEVICE_SN = "5801304663656"   # 设备的sn
 
 class SerialConfig:
@@ -48,7 +48,7 @@ DEVICE_TYPE = "4g"                   # 设备类型：'wifi' 或 '4g'
 WIFI_SSID = "TP-LINK_D130"           # 绑定的wifi名称 如果测的是wifi设备则要配置这里
 WIFI_PASSWORD = "admin123"           # 绑定的wifi的密码
 
-DEVICE_DISPLAY_NAME = "3356测"       # 信息校验的名称 需要和DEVICE_NAME = "8059测" 也就是设备绑定后的名称一致
+DEVICE_DISPLAY_NAME = "3656测"       # 信息校验的名称 需要和DEVICE_NAME = "8059测" 也就是设备绑定后的名称一致
 
 
 # ----------------- 出图性能与工作模式压测配置 -----------------

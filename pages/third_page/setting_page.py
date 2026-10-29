@@ -131,6 +131,20 @@ class SettingsPage(BasePage):
             auto_scroll=False
         )
 
+    # ================= 智能侦测入口 =================
+    def click_intelligent_detection_entry(self) -> bool:
+        print("[SettingsPage] 点击智能侦测入口")
+
+        if not self._is_element_present(
+            *SettingsLocators.TV_INTELLIGENT_DETECTION
+        ):
+            return False
+
+        return self.safe_click(
+            SettingsLocators.ENTRY_INTELLIGENT_DETECTION,
+            auto_scroll=False
+        )
+
 
 
 

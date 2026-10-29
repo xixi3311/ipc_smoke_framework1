@@ -43,6 +43,10 @@ class SettingsLocators:
     TV_CAMERA_SETTINGS = ('xpath', "//*[@text='摄像机设置']")
     ENTRY_CAMERA_SETTINGS = ('id', f'{PKG}:id/cameraSettingRel')
 
+    # 智能侦测入口
+    ENTRY_INTELLIGENT_DETECTION = ('id', f'{PKG}:id/motionDetectionRel')
+    TV_INTELLIGENT_DETECTION = ('xpath',"//*[@text='智能侦测']")
+
 
 
 
