@@ -7,6 +7,7 @@ from pages.second_page.live_page import LivePage
 from pages.third_page.sdcard_replay_page import SdCardReplayPage
 from pages.third_page.cloud_replay_page import CloudReplayPage
 from pages.third_page.setting_page import SettingsPage
+from pages.third_page.sdcard_replay_ext_page import SdCardReplayExtPage
 
 
 @allure.epic("IPC 自动化测试框架")
@@ -23,6 +24,8 @@ class TestLiveAndReplay:
         self.sdcard_page = SdCardReplayPage(driver)
         self.cloud_page = CloudReplayPage(driver)
         self.settings_page = SettingsPage(driver)
+        self.sdcard_ext_page = SdCardReplayExtPage(driver)
+
 
         # 确保启动时处于首页
         self.home_page.ensure_back_to_home()
@@ -35,6 +38,7 @@ class TestLiveAndReplay:
 
         with allure.step("验证 Live 画面是否成功出图 (支持1/2/3/4目)"):
             assert self.live_page.wait_for_stream_loaded(), "Live 实时画面出图失败！"
+
 
     @allure.story("设备设置 - 进入设置界面校验")
     @pytest.mark.smoke

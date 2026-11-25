@@ -8,6 +8,7 @@ import uiautomator2 as u2
 import allure
 import allure_pytest
 import config
+import atexit
 
 # 导入所有 Page 类
 from pages.first_page.home_page import HomePage
@@ -28,7 +29,17 @@ sys.path.insert(0, PROJECT_ROOT)
 
 @pytest.fixture(scope="session", autouse=True)
 def serial_logger():
-    """全局自动开启串口日志，整个测试 Session 期间持续采集"""
+    """绑定压测期间复用 runner 管理的串口，其余场景保持原行为"""
+    monitor = getattr(
+        config,
+        "BINDING_STRESS_SERIAL_MONITOR",
+        None
+    )
+
+    if monitor:
+        yield monitor
+        return
+
     monitor = SerialMonitor()
     monitor.start_logging()
 
@@ -88,7 +99,9 @@ def pytest_runtest_makereport(item, call):
 
         # 识别测试类型
         nodeid = item.nodeid
-        if "test_add_device" in nodeid:
+        if "test_binding_stress" in nodeid:
+            test_type = "绑定压测"
+        elif "test_add_device" in nodeid:
             test_type = "设备绑定"
         elif "test_delete" in nodeid:
             test_type = "设备删除"
@@ -182,11 +195,18 @@ def pytest_runtest_makereport(item, call):
             )[:-3]
             date_folder = datetime.now().strftime("%Y%m%d")
 
-            # 使用 config.PROJECT_ROOT，避免打包时写入 _MEI 临时目录
+            # 使用运行配置中的截图目录，避免打包时写入 _MEI 临时目录
+            screenshot_root = getattr(
+                config,
+                "SCREENSHOT_DIR",
+                os.path.join(
+                    config.PROJECT_ROOT,
+                    "logs",
+                    "screenshots"
+                )
+            )
             save_dir = os.path.join(
-                config.PROJECT_ROOT,
-                "logs",
-                "screenshots",
+                screenshot_root,
                 date_folder
             )
             os.makedirs(save_dir, exist_ok=True)

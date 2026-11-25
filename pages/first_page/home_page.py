@@ -33,35 +33,49 @@ class HomePage(BasePage):
         return False
 
     def ensure_back_to_home(self, max_retries=3) -> bool:
-        """【强力安全保障】：确保应用切回到设备首页"""
+        """确保应用切回设备首页"""
         if self.is_on_home_page():
             print("[HomePage] 确认当前已处于设备首页 🟢")
             return True
 
         device_tab = self.driver(text="设备")
         if device_tab.exists:
-            print("[HomePage] 发现处于主框架其他 Tab 页，正在主动点击底部【设备】Tab 切回首页...")
-            device_tab.click()
-            time.sleep(0.8)
-            if self.is_on_home_page():
-                print("[HomePage] ✅ 成功点击 Tab 切回设备首页！")
-                return True
+            print("[HomePage] 发现处于主框架其他 Tab 页，尝试点击底部【设备】Tab")
+            try:
+                device_tab.click()
+                time.sleep(0.8)
+                if self.is_on_home_page():
+                    print("[HomePage] ✅ 成功点击 Tab 切回设备首页！")
+                    return True
+            except Exception as e:
+                print(f"[HomePage] 点击底部【设备】Tab失败，继续尝试返回: {e}")
 
         for i in range(max_retries):
-            print(f"[HomePage] 当前不在首页，正在尝试第 {i + 1} 次按 Back 键切回首页...")
+            print(
+                f"[HomePage] 当前不在首页，正在尝试第 {i + 1} 次"
+                "按 Back 键切回首页..."
+            )
             self.driver.press("back")
             time.sleep(1.2)
 
+            # Back 可能已经直接回到首页，先判断，避免误点异常坐标
+            if self.is_on_home_page():
+                print("[HomePage] ✅ 成功切回设备首页！")
+                return True
+
+            device_tab = self.driver(text="设备")
             if device_tab.exists:
-                device_tab.click()
-                time.sleep(0.8)
+                try:
+                    device_tab.click()
+                    time.sleep(0.8)
+                except Exception as e:
+                    print(f"[HomePage] 点击底部【设备】Tab失败: {e}")
 
             if self.is_on_home_page():
                 print("[HomePage] ✅ 成功切回设备首页！")
                 return True
 
-        # 强力兜底：强杀进程后重新拉起 App，防止页面彻底卡死
-        print("[HomePage] ⚠️ 无法通过 Back 键返回首页，执行【强杀并重新拉起 App】...")
+        print("[HomePage] ⚠️ 无法通过 Back 键返回首页，执行强制重启 App...")
         self.launch_app(stop=True)
         time.sleep(3)
         return self.is_on_home_page()
@@ -208,4 +222,28 @@ class HomePage(BasePage):
         time.sleep(0.5)
         return self.safe_click(HomeLocators.MENU_SCAN_QR, auto_scroll=False)
 
+    # ---------------- 首页刷新与设备验证 ----------------
+    def refresh_device_list(self) -> bool:
+        self.logger.info("下拉刷新首页设备列表")
+        try:
+            self.driver.swipe_ext("down", scale=0.3)
+            time.sleep(2)
+            return self.is_on_home_page()
+        except Exception as e:
+            self.logger.warning(f"刷新首页设备列表失败: {e}")
+            return False
 
+    def wait_for_device(self, device_name: str, timeout=20) -> bool:
+        locator = HomeLocators.get_device_name_locator(device_name)
+        return self.wait_until(
+            lambda: self._is_element_present(*locator),
+            timeout=timeout
+        )
+
+    # ---------------- 设备删除状态检查 ----------------
+    def wait_for_device_absent(self, device_name: str, timeout=15) -> bool:
+        locator = HomeLocators.get_device_name_locator(device_name)
+        return self.wait_until(
+            lambda: not self._is_element_present(*locator),
+            timeout=timeout
+        )

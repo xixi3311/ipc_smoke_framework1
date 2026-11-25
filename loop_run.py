@@ -1,68 +1,85 @@
-# loop_run.py
-# loop_run.py
 import os
 import sys
 import time
 import shutil
 import subprocess
+import config
 
 
-# 项目根目录
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+TESTS_DIR = os.path.join(BASE_DIR, "tests")
 os.chdir(BASE_DIR)
 
+ROUNDS = config.SMOKE_ROUNDS
+INTERVAL = config.SMOKE_ROUND_INTERVAL
+FORMAT_INTERVAL = 5
+ALLURE_DIR = os.path.join(BASE_DIR, "reports", "allure-results")
+PYTEST_LOG = os.path.join(BASE_DIR, "logs", "pytest_run.log")
 
-# 测试顺序：绑定 -> 出图/信息/重启 -> 删除
-test_files = [
+
+# 每轮测试顺序
+TEST_FILES_BEFORE_FORMAT = [
     "test_add_device.py",
     "test_performance_matrix.py",
+    "test_detection_recording.py",
+    "test_sdcard_retrieval.py"
+]
+
+TEST_FILES_AFTER_FORMAT = [
+    "test_device_info.py",
     "test_reboot.py",
     "test_delete.py"
 ]
 
 
-ROUNDS = 30
-INTERVAL = 10  # 每轮间隔（秒）
-allure_dir = os.path.join(BASE_DIR, "reports", "allure-results")
-
-
 for i in range(1, ROUNDS + 1):
     print(f"\n{'=' * 60}")
-    print(f"  🔥 压测第 {i} / {ROUNDS} 轮")
+    print(f"  冒烟测试第 {i} / {ROUNDS} 轮")
     print(f"{'=' * 60}")
 
-    # 每轮开始前设置轮次，conftest.py 读取该值写入 Excel
     os.environ["CURRENT_ROUND"] = str(i)
 
-    # 每轮清理旧 Allure 结果，避免结果数据持续累积
-    if os.path.exists(allure_dir):
-        shutil.rmtree(allure_dir)
-    os.makedirs(allure_dir, exist_ok=True)
+    if os.path.exists(ALLURE_DIR):
+        shutil.rmtree(ALLURE_DIR)
+    os.makedirs(ALLURE_DIR, exist_ok=True)
+    os.makedirs(os.path.dirname(PYTEST_LOG), exist_ok=True)
 
-    # 执行当前轮测试
+    test_files = list(TEST_FILES_BEFORE_FORMAT)
+
+    if i % FORMAT_INTERVAL == 0:
+        test_files.append("test_sdcard_format.py")
+        print(f"[Run] 第 {i} 轮执行 SD 卡格式化")
+
+    test_files.extend(TEST_FILES_AFTER_FORMAT)
+
     cmd = [
-        sys.executable, "-m", "pytest",
+        sys.executable,
+        "-m",
+        "pytest",
         *test_files,
-        "-m", "smoke",
+        "-m",
+        "smoke",
         "-v",
-        f"--alluredir={allure_dir}",
-        "--log-file=logs/pytest_run.log",
+        f"--alluredir={ALLURE_DIR}",
+        f"--log-file={PYTEST_LOG}"
     ]
 
     result = subprocess.run(
         cmd,
-        cwd=os.path.join(BASE_DIR, "tests"),
-        env=os.environ.copy(),
+        cwd=TESTS_DIR,
+        env=os.environ.copy()
     )
 
     if result.returncode != 0:
-        print(f"\n⚠️ 第 {i} 轮存在失败，继续下一轮...")
+        print(f"\n⚠️ 第 {i} 轮存在失败用例，继续下一轮")
 
     if i < ROUNDS:
-        print(f"\n⏳ 第 {i} 轮完成，等待 {INTERVAL} 秒后继续...")
+        print(f"\n⏳ 第 {i} 轮完成，等待 {INTERVAL} 秒")
         time.sleep(INTERVAL)
 
 
+os.environ.pop("CURRENT_ROUND", None)
+
 print("\n" + "=" * 60)
-print(f"  ✅ 全部 {ROUNDS} 轮压测完成！")
+print(f"  全部 {ROUNDS} 轮测试完成")
 print("=" * 60)

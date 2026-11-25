@@ -24,12 +24,12 @@ SMOKE_ROUND_INTERVAL = 10   # 下一轮需要等待的秒数
 
 
 # ----------------- 测试设备参数配置 -----------------
-DEVICE_NAME = "3656测"       # 设备绑定后的名称
-DEVICE_SN = "5801304663656"   # 设备的sn
+DEVICE_NAME = "2775测"       # 设备绑定后的名称
+DEVICE_SN = "5801688782775"   # 设备的sn
 
 class SerialConfig:
-    PORT = "COM9"             # 设备主控的串口
-    BAUDRATE = 1500000        #串口的波特率
+    PORT = "COM14"             # 设备主控的串口
+    BAUDRATE = 115200        #串口的波特率
     TIMEOUT = 1                # 串口读取超时
     LOG_DIR = os.path.join(PROJECT_ROOT, "logs", "serial")   # 串口日志保存路径
 
@@ -44,9 +44,12 @@ class SerialConfig:
 ADB_DEVICE_SERIAL = "RFCY108QBKM"    # 手机的序列号
 PREVIEW_TIMEOUT = 30                 # 所有场景出图等待超时时间（秒）
 APP_PACKAGE = "com.xc.sv360"         # APP包名
-DEVICE_TYPE = "4g"                   # 设备类型：'wifi' 或 '4g'
-WIFI_SSID = "TP-LINK_D130"           # 绑定的wifi名称 如果测的是wifi设备则要配置这里
-WIFI_PASSWORD = "admin123"           # 绑定的wifi的密码
+
+# ----------绑定相关配置--------------
+BINDING_TYPE = "sn"                # 绑定入口："wifi"（扫码/SN）或 "bluetooth" 蓝牙
+DEVICE_TYPE = "wifi"                   # 设备类型：'wifi' 或 '4g'
+WIFI_SSID = "TP-LINK_5G_D130"           # 绑定的wifi名称 如果测的是wifi设备则要配置这里
+WIFI_PASSWORD = "a12345678"           # 绑定的wifi的密码
 
 DEVICE_DISPLAY_NAME = "3656测"       # 信息校验的名称 需要和DEVICE_NAME = "8059测" 也就是设备绑定后的名称一致
 

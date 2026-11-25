@@ -91,11 +91,16 @@ class LivePage(BasePage):
 
     # ---------------- Live 页面操作 ----------------
     def _is_settings_page_visible(self) -> bool:
-        """通过设置页定位器判断是否已进入设备设置页面"""
+        """通过设置页标题和可见入口判断是否已进入设置页面"""
         return (
-            self._is_element_present(*SettingsLocators.RL_WORK_MODE)
-            or self._is_element_present(*SettingsLocators.BTN_REBOOT_DEVICE)
-            or self._is_element_present(*SettingsLocators.BTN_DELETE_DEVICE)
+                self._is_element_present(*SettingsLocators.TV_SETTINGS_TITLE)
+                or self._is_element_present(
+            *SettingsLocators.TV_MESSAGE_NOTIFICATION
+        )
+                or self._is_element_present(*SettingsLocators.TV_CAMERA_ALARM)
+                or self._is_element_present(
+            *SettingsLocators.TV_INTELLIGENT_DETECTION
+        )
         )
 
     def click_settings_gear(self) -> bool:

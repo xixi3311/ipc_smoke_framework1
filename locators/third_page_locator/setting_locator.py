@@ -47,6 +47,15 @@ class SettingsLocators:
     ENTRY_INTELLIGENT_DETECTION = ('id', f'{PKG}:id/motionDetectionRel')
     TV_INTELLIGENT_DETECTION = ('xpath',"//*[@text='智能侦测']")
 
+    # SD 卡存储空间入口
+    ENTRY_SD_STORAGE = ('id', f'{PKG}:id/sdStorageRl')
+    TV_SD_STORAGE_STATUS = ('id', f'{PKG}:id/recordStatusTvSingle')
+
+    # 设置页标题与页面标志
+    TV_SETTINGS_TITLE = ('xpath', "//*[@text='设置']")
+    TV_MESSAGE_NOTIFICATION = ('xpath', "//*[@text='消息通知']")
+    TV_CAMERA_ALARM = ('id', f'{PKG}:id/tvCameraAlarm')
+
 
 
 

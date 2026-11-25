@@ -21,3 +21,9 @@ class SetWifiPage(BasePage):
         self.hide_keyboard()
         # 再点击下一步按钮
         return self.safe_click(SetWifiLocators.NEXT_BTN, auto_scroll=False)
+
+    def wait_for_set_wifi_page(self, timeout=15) -> bool:
+        return self.wait_until(
+            self.is_on_set_wifi_page,
+            timeout=timeout
+        )

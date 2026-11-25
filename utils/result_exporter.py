@@ -12,9 +12,14 @@ class PerformanceResultExporter:
     def __init__(self):
         os.makedirs(config.OUTPUT_RESULTS_DIR, exist_ok=True)
         # 固定文件名，所有轮次追加到同一个文件
+        excel_name = getattr(
+            config,
+            "RESULT_EXCEL_NAME",
+            f"test_report_{config.DEVICE_NAME}.xlsx"
+        )
         self.excel_path = os.path.join(
             config.OUTPUT_RESULTS_DIR,
-            f"test_report_{config.DEVICE_NAME}.xlsx"
+            excel_name
         )
         self.records = []
         self.errors = []

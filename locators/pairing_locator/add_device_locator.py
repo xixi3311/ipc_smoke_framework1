@@ -19,3 +19,10 @@ class AddDeviceLocators:
     # 提示文本（可选）
     TIPS1 = ('id', f'{PKG}:id/tvResetTips1')
     TIPS2 = ('id', f'{PKG}:id/tvResetTips2')
+
+    # 蓝牙附近设备
+    NEARBY_DEVICE_TITLE = ('xpath', "//*[@text='发现附近设备']")
+
+    @staticmethod
+    def get_bluetooth_add_button(device_sn):
+        return ('xpath', f"//*[@resource-id='{PKG}:id/itemBluetoothName' and @text='{device_sn}']/../*[@resource-id='{PKG}:id/itemBluetoothAdd']")

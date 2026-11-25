@@ -8,14 +8,25 @@ class SettingsPage(BasePage):
     """设备设置页面类 """
 
     def is_on_settings_page(self) -> bool:
-        """校验当前是否处于设备设置界面 """
+        """校验当前是否处于设备设置界面"""
         print("[SettingsPage] 正在校验是否进入【设备设置】界面...")
         start_time = time.time()
+
         while time.time() - start_time < 3:
-            if self._is_element_present(*SettingsLocators.TV_TITLE) or \
-               self._is_element_present(*SettingsLocators.RL_WORK_MODE):
+            if (
+                    self._is_element_present(*SettingsLocators.TV_SETTINGS_TITLE)
+                    or self._is_element_present(
+                *SettingsLocators.TV_MESSAGE_NOTIFICATION
+            )
+                    or self._is_element_present(*SettingsLocators.TV_CAMERA_ALARM)
+                    or self._is_element_present(
+                *SettingsLocators.TV_INTELLIGENT_DETECTION
+            )
+            ):
                 return True
+
             time.sleep(0.5)
+
         return False
 
     # ================= UI1 & UI5: 工作模式相关操作 =================
@@ -142,6 +153,32 @@ class SettingsPage(BasePage):
 
         return self.safe_click(
             SettingsLocators.ENTRY_INTELLIGENT_DETECTION,
+            auto_scroll=False
+        )
+
+    # ================= SD 卡存储空间入口 =================
+    def get_sd_storage_status(self):
+        try:
+            element = self._get_element(SettingsLocators.TV_SD_STORAGE_STATUS)
+            if element.exists:
+                return element.info.get("text", "").strip()
+        except Exception as e:
+            self.logger.warning(f"[SettingsPage] 读取 SD 卡状态失败: {e}")
+
+        return ""
+
+    def click_sd_storage_entry(self) -> bool:
+        print("[SettingsPage] 查找并点击存储空间入口")
+
+        if not self.scroll_into_view(
+            SettingsLocators.ENTRY_SD_STORAGE,
+            max_swipes=5,
+            direction="up"
+        ):
+            return False
+
+        return self.safe_click(
+            SettingsLocators.ENTRY_SD_STORAGE,
             auto_scroll=False
         )
 

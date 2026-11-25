@@ -32,3 +32,40 @@ class AddDevicePage(BasePage):
     def click_qr_pairing(self) -> bool:
         self.logger.info("点击二维码配网")
         return self.safe_click(AddDeviceLocators.QR_PAIR, auto_scroll=False)
+
+    # ---------------- 蓝牙设备绑定 ----------------
+    def is_on_bluetooth_device_list(self) -> bool:
+        return (
+                self.is_on_add_device_page()
+                and self._is_element_present(
+            *AddDeviceLocators.NEARBY_DEVICE_TITLE
+        )
+        )
+
+    def wait_for_bluetooth_device_list(self, timeout=15) -> bool:
+        return self.wait_until(
+            self.is_on_bluetooth_device_list,
+            timeout=timeout
+        )
+
+    def click_bluetooth_device(self, device_sn: str, timeout=30) -> bool:
+        locator = AddDeviceLocators.get_bluetooth_add_button(device_sn)
+
+        self.logger.info(
+            f"等待附近设备 SN: {device_sn}，最长 {timeout} 秒"
+        )
+
+        if not self.wait_until(
+                lambda: self._is_element_present(*locator),
+                timeout=timeout
+        ):
+            self.logger.warning(f"附近设备未发现目标 SN: {device_sn}")
+            return False
+
+        self.logger.info(f"已发现附近设备 SN: {device_sn}，立即点击绑定")
+        return self.safe_click(
+            locator,
+            timeout=5,
+            auto_scroll=False,
+            retries=2
+        )
