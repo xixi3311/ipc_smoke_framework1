@@ -37,20 +37,25 @@ class TestImageFlip:
             assert self.live_page.wait_for_stream_loaded(), \
                 "Live 画面未成功出图"
 
-        with allure.step("进入设置并切换为常电模式"):
-            assert self.live_page.click_settings_gear(), \
-                "进入设备设置失败"
-            assert self.settings_page.click_work_mode_entry(), \
-                "进入工作模式页面失败"
-            assert self.work_mode_page.is_on_work_mode_page(), \
-                "未能进入工作模式页面"
-            assert self.work_mode_page.select_mode("常电模式"), \
-                "切换常电模式失败"
-            assert self.work_mode_page.click_back_to_settings(), \
-                "返回设备设置页失败"
-            assert self.home_page.ensure_back_to_home(), \
-                "切换工作模式后返回首页失败"
-            time.sleep(0.5)
+        if config.DEVICE_WORK_MODE.strip().upper() == "AOV":
+            with allure.step("进入设置并切换为常电模式"):
+                assert self.live_page.click_settings_gear(), \
+                    "进入设备设置失败"
+                assert self.settings_page.click_work_mode_entry(), \
+                    "进入工作模式页面失败"
+                assert self.work_mode_page.is_on_work_mode_page(), \
+                    "未能进入工作模式页面"
+                assert self.work_mode_page.select_mode("常电模式"), \
+                    "切换常电模式失败"
+                assert self.work_mode_page.click_back_to_settings(), \
+                    "返回设备设置页失败"
+                assert self.home_page.ensure_back_to_home(), \
+                    "切换工作模式后返回首页失败"
+                time.sleep(0.5)
+        else:
+            print("[Test] 常电设备跳过工作模式切换")
+
+
 
         with allure.step("重新进入预览并打开设备设置"):
             assert self.home_page.click_play_button(

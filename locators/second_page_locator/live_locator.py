@@ -20,7 +20,9 @@ class LiveLocators:
     LOADING_LAYOUT = ('xpath',
                       f"//*[contains(@resource-id, '{PKG}:id/loading') or contains(@resource-id, '{PKG}:id/progressBar') or contains(@resource-id, '{PKG}:id/tvLoading') or contains(@resource-id, '{PKG}:id/videoProgress')]")
 
-    # 底部导航按键 (云回放 / 卡回放 / 报警消息)
-    TV_CLOUD_PLAYBACK = ('id', f'{PKG}:id/tvCloudPlayback')
+        # Live 页面底部“回放”入口
+    TV_REPLAY = ('id', f'{PKG}:id/tvCloudPlayback')
+    TV_CLOUD_PLAYBACK = TV_REPLAY
     TV_CARD_PLAYBACK = ('id', f'{PKG}:id/tvCardPlayback')
+
     TV_ALERT_MESSAGE = ('id', f'{PKG}:id/tvAlertMessage')

@@ -98,7 +98,7 @@ class SerialConfig:
 PowerShell：
 
 ```powershell
-.\run_smoke.ps1
+python -u .\run.py     #调试
 ```
 
 Python：

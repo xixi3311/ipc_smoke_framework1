@@ -5,9 +5,13 @@ PKG = config.APP_PACKAGE
 
 class CloudReplayLocators:
     """
-    云回看定位器 (UI4 列表页 & UI5 播放页)
+    云回看定位器 (云回看主界面与视频播放页)
     """
-    # ---------------- UI4: 云回看事件列表界面 ----------------
+    # 云回看主界面中的云 / SD 卡切换按钮
+    BTN_SDCARD_PLAYBACK = ('id', f'{PKG}:id/toCarPlayBack')
+    TV_CLOUD_NOT_ACTIVATED = ('id', f'{PKG}:id/tvCenter')
+
+    # ---------------- 云回看事件列表界面 ----------------
     # 云列表容器 (GridView / RecyclerView)
     RECYCLER_EVENT_LIST = ('id', f'{PKG}:id/recyclerView')
 

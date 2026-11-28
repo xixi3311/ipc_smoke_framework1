@@ -89,8 +89,12 @@ class TestReboot:
                 time.sleep(10)
                 print("[Test]  等待设备重新启动（90 秒）...")
                 time.sleep(90)
+
                 self.home_page.ensure_back_to_home()
+
+                self.home_page.refresh_device_list()
                 if self._try_live_stream(device_name, timeout=20):
+
                     print("[Test] ✅ 通过串口 reboot 后设备恢复正常")
                 else:
                     print("[Test] ❌ 串口 reboot 后设备仍无法出图，需要人工介入")
@@ -106,11 +110,16 @@ class TestReboot:
     def _try_live_stream(self, device_name: str, timeout: int = 15) -> bool:
         """单次尝试预览出图"""
         try:
+
             self.home_page.ensure_back_to_home()
-            time.sleep(1)
+
+            self.home_page.refresh_device_list()
             status = self.home_page.check_device_offline_status(device_name)
+
             if status.get("is_offline", False):
+                print(f"[Test] ⚠️ 设备 [{device_name}] 刷新后仍离线")
                 return False
+
             self.home_page.click_play_button(device_name)
 
             # ========== 新增：兜底检测加载中卡死 ==========
@@ -128,10 +137,15 @@ class TestReboot:
 
     def _verify_live_stream(self, device_name: str, serial_logger) -> bool:
         """尝试预览出图，最多重试 MAX_RETRY 次"""
+
         for attempt in range(self.MAX_RETRY + 1):
+
             print(f"[Test]  第 {attempt + 1}/{self.MAX_RETRY + 1} 次尝试预览出图...")
 
+            self.home_page.ensure_back_to_home()
+            self.home_page.refresh_device_list()
             status = self.home_page.check_device_offline_status(device_name)
+
             if status.get("is_offline", False):
                 print(f"[Test] ⚠️ 设备离线，尝试 {attempt + 1}")
                 allure.attach(

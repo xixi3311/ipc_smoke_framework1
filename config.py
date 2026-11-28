@@ -24,12 +24,14 @@ SMOKE_ROUND_INTERVAL = 10   # 下一轮需要等待的秒数
 
 
 # ----------------- 测试设备参数配置 -----------------
-DEVICE_NAME = "2775测"       # 设备绑定后的名称
-DEVICE_SN = "5801688782775"   # 设备的sn
+DEVICE_NAME = "6231"       # 设备绑定后的名称
+DEVICE_SN = "580168269241"   # 设备的sn
+DEVICE_WORK_MODE = "changdian"  # 可选: "changdian" 或 "AOV"
+
 
 class SerialConfig:
-    PORT = "COM14"             # 设备主控的串口
-    BAUDRATE = 115200        #串口的波特率
+    PORT = "COM7"             # 设备主控的串口
+    BAUDRATE = 1500000       #串口的波特率
     TIMEOUT = 1                # 串口读取超时
     LOG_DIR = os.path.join(PROJECT_ROOT, "logs", "serial")   # 串口日志保存路径
 
@@ -51,7 +53,7 @@ DEVICE_TYPE = "wifi"                   # 设备类型：'wifi' 或 '4g'
 WIFI_SSID = "TP-LINK_5G_D130"           # 绑定的wifi名称 如果测的是wifi设备则要配置这里
 WIFI_PASSWORD = "a12345678"           # 绑定的wifi的密码
 
-DEVICE_DISPLAY_NAME = "3656测"       # 信息校验的名称 需要和DEVICE_NAME = "8059测" 也就是设备绑定后的名称一致
+DEVICE_DISPLAY_NAME = "6231"       # 信息校验的名称 需要和DEVICE_NAME = "8059测" 也就是设备绑定后的名称一致
 
 
 # ----------------- 出图性能与工作模式压测配置 -----------------

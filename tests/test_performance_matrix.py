@@ -85,18 +85,32 @@ class TestPerformanceMatrix:
         """SD 卡回看出图测试，失败自动重试"""
         for attempt in range(1, max_retries + 1):
             print(f"[Biz]  SD 卡回看出图测试 (尝试 {attempt}/{max_retries})...")
-            self.live_page.click_card_playback()
+            self.home_page.ensure_back_to_home()
+
+            self.home_page.click_play_button(device_name)
+            self.live_page.wait_for_stream_loaded(timeout=config.PREVIEW_TIMEOUT)
+            self.live_page.click_replay()
+            self.cloud_page.wait_until(
+                self.cloud_page.is_on_cloud_replay_page,
+                timeout=10
+            )
+            self.cloud_page.click_sdcard_playback()
+            self.sdcard_page.wait_until(
+                self.sdcard_page.is_on_sdcard_replay_page,
+                timeout=config.PREVIEW_TIMEOUT
+            )
 
             start_t = time.time()
+
             success = self.sdcard_page.wait_for_stream_loaded(timeout=config.PREVIEW_TIMEOUT)
             duration = round(time.time() - start_t, 2)
 
             if success:
                 time.sleep(1.0)
-                print("[Biz]  从卡回看按 Back 退回 Live...")
-                self.driver.press("back")
-                time.sleep(1.0)
+                self.home_page.ensure_back_to_home()
+
                 return True, duration
+
 
             print(f"[Biz] ⚠️ SD 卡回看第 {attempt}/{max_retries} 次尝试失败 (耗时 {duration}s)")
             if attempt < max_retries:
@@ -104,10 +118,10 @@ class TestPerformanceMatrix:
                 self.driver.press("back")
                 time.sleep(1.0)
 
-        self._attach_failure_screenshot(f"SD卡回看失败_{device_name}")
-        self.driver.press("back")
-        time.sleep(1.0)
+                self._attach_failure_screenshot(f"SD卡回看失败_{device_name}")
+        self.home_page.ensure_back_to_home()
         return False, duration
+
 
     def _run_cloud_step(self, device_name, max_retries=3):
         """云存回看出图测试，失败自动重试"""
@@ -153,38 +167,16 @@ class TestPerformanceMatrix:
             time.sleep(0.8)
         return False, duration
 
-    @allure.story("动态扫描工作模式并轮询执行 Live/卡回看/云回看 出图压测")
+    @allure.story("动态扫描工作模式并轮询执行 Live/SD卡回看出图压测")
     @pytest.mark.smoke
     def test_all_modes_preview_performance(self, serial_logger):
         device_name = getattr(config, "DEVICE_NAME", "摄像机")
         failures = []  # 收集所有失败步骤，最后统一 assert 触发 pytest FAILED
 
-        # 1. 动态扫描模式
-        self.home_page.ensure_back_to_home()
-        self.home_page.click_play_button(device_name)
-        self.live_page.wait_for_stream_loaded()
-        time.sleep(0.5)
+                # 1. 仅 AOV 设备需要扫描和切换工作模式
 
-        self.live_page.click_settings_gear()
-        time.sleep(0.5)
-        self.settings_page.click_work_mode_entry()
-        time.sleep(0.5)
-
-        modes_map = self.work_mode_page.scan_device_modes()
-        available_modes = list(modes_map.keys())
-        print(f"[Biz]  扫描到可用工作模式: {available_modes}")
-        self.home_page.ensure_back_to_home()
-
-        # 2. 模式遍历压测
-        for mode in available_modes:
-            rounds = config.WORK_MODE_TEST_ROUNDS.get(mode, 2)
-            wait_time = config.MODE_SWITCH_WAIT_TIME.get(
-                mode, config.MODE_SWITCH_WAIT_TIME.get("DEFAULT", 10)
-            )
-
-            # A. 切换工作模式
+        if config.DEVICE_WORK_MODE.strip().upper() == "AOV":
             self.home_page.ensure_back_to_home()
-            time.sleep(0.5)
             self.home_page.click_play_button(device_name)
             self.live_page.wait_for_stream_loaded()
             time.sleep(0.5)
@@ -194,12 +186,51 @@ class TestPerformanceMatrix:
             self.settings_page.click_work_mode_entry()
             time.sleep(0.5)
 
-            self.work_mode_page.select_mode(mode)
-            time.sleep(0.5)
+            modes_map = self.work_mode_page.scan_device_modes()
+            available_modes = list(modes_map.keys())
+            print(f"[Biz] 扫描到可用工作模式: {available_modes}")
             self.home_page.ensure_back_to_home()
+        else:
+            available_modes = ["常电模式"]
+            print("[Biz] 常电设备不提供工作模式入口，跳过模式扫描和切换")
 
-            print(f"\n[Biz] 🟢 模式【{mode}】切换完成，回首页静置等待生效: {wait_time} 秒...")
-            time.sleep(wait_time)
+
+
+        # 2. 模式遍历压测
+        for mode in available_modes:
+            rounds = config.WORK_MODE_TEST_ROUNDS.get(mode, 1)
+
+            wait_time = (
+                config.MODE_SWITCH_WAIT_TIME.get(
+                    mode, config.MODE_SWITCH_WAIT_TIME.get("DEFAULT", 10)
+                )
+                if config.DEVICE_WORK_MODE.strip().upper() == "AOV"
+                else 0
+            )
+
+        # A. AOV 设备切换工作模式；常电设备直接进入压测
+        if config.DEVICE_WORK_MODE.strip().upper() == "AOV":
+                self.home_page.ensure_back_to_home()
+                time.sleep(0.5)
+                self.home_page.click_play_button(device_name)
+                self.live_page.wait_for_stream_loaded()
+                time.sleep(0.5)
+
+                self.live_page.click_settings_gear()
+                time.sleep(0.5)
+                self.settings_page.click_work_mode_entry()
+                time.sleep(0.5)
+
+                self.work_mode_page.select_mode(mode)
+                time.sleep(0.5)
+                self.home_page.ensure_back_to_home()
+
+                print(f"[Biz] 模式【{mode}】切换完成，等待生效: {wait_time} 秒...")
+                time.sleep(wait_time)
+        else:
+            print("[Biz] 常电设备跳过工作模式设置")
+
+
 
             # 读取 run.py 设置的当前冒烟轮次
             current_round = int(os.environ.get("CURRENT_ROUND", "1"))
@@ -229,7 +260,10 @@ class TestPerformanceMatrix:
                         self.home_page.ensure_back_to_home()
                         continue
 
-                    # Step 2: SD 卡回看 (在 Live 页直接跳转，设备已被唤醒，无需再等休眠)
+                                        # Step 2: 从回看入口进入 SD 卡回放
+
+
+
                     sd_success, sd_dur = self._run_sdcard_step(device_name)
                     self.exporter.record_result(
                         round_num=current_round,

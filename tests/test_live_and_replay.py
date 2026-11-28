@@ -14,7 +14,7 @@ from pages.third_page.sdcard_replay_ext_page import SdCardReplayExtPage
 @allure.feature("Live 实时预览与卡/云回看功能测试")
 class TestLiveAndReplay:
 
-    TARGET_DEVICE = "2601P测"
+    TARGET_DEVICE = "6231"
 
     @pytest.fixture(autouse=True)
     def setup_page(self, driver):
@@ -58,21 +58,35 @@ class TestLiveAndReplay:
     @allure.story("卡回看 (SD Card) 切换与出图校验")
     @pytest.mark.smoke
     def test_sdcard_replay_display(self):
-        with allure.step(f"进入 [{self.TARGET_DEVICE}] Live 预览"):
-            self.home_page.click_play_button(self.TARGET_DEVICE)
-            self.live_page.wait_for_stream_loaded()
 
-        with allure.step("点击底部 '卡回放'"):
-            assert self.live_page.click_card_playback(), "点击卡回放按钮失败"
+        with allure.step(f"进入 [{self.TARGET_DEVICE}] Live 预览"):
+
+            assert self.home_page.click_play_button(self.TARGET_DEVICE), \
+                "点击设备播放按钮失败"
+            assert self.live_page.wait_for_stream_loaded(), \
+                "Live 预览未能出图"
+
+        with allure.step("进入云回看并切换到 SD 卡回看"):
+            assert self.live_page.click_replay(), "点击回看入口失败"
+            assert self.cloud_page.wait_until(
+                self.cloud_page.is_on_cloud_replay_page,
+                timeout=10
+            ), "未能进入云回看界面"
+            assert self.cloud_page.click_sdcard_playback(), \
+                "点击 SD 卡图标失败"
+            assert self.sdcard_page.wait_until(
+                self.sdcard_page.is_on_sdcard_replay_page,
+                timeout=10
+            ), "未能进入 SD 卡回看界面"
 
         with allure.step("验证卡回看画面出图状态"):
-            assert self.sdcard_page.wait_for_stream_loaded(), "卡回看视频出图失败！"
+            assert self.sdcard_page.wait_for_stream_loaded(), \
+                "卡回看视频出图失败！"
 
-            # ---- 步骤 4: 回到首页 ----
-            with allure.step("返回首页"):
-                self.sdcard_ext_page.click_back_to_live()
-                self.live_page.click_back_to_home()
-                self.home_page.ensure_back_to_home()
+        with allure.step("返回首页"):
+            assert self.home_page.ensure_back_to_home(), \
+                "未能从 SD 卡回看界面返回首页"
+
 
 
 """

@@ -6,7 +6,9 @@ import config
 from pages.first_page.home_page import HomePage
 from pages.second_page.live_page import LivePage
 from pages.third_page.sdcard_replay_ext_page import SdCardReplayExtPage
+from pages.third_page.cloud_replay_page import CloudReplayPage
 from pages.third_page.setting_page import SettingsPage
+
 from pages.fourth_page.work_mode_page import WorkModePage
 
 
@@ -18,11 +20,17 @@ class TestSdCardRetrieval:
 
     @pytest.fixture(autouse=True)
     def setup_pages(self, driver):
+
         self.driver = driver
         self.home_page = HomePage(driver)
+
+
         self.live_page = LivePage(driver)
+        self.cloud_page = CloudReplayPage(driver)
         self.settings_page = SettingsPage(driver)
+
         self.work_mode_page = WorkModePage(driver)
+
         self.sdcard_ext_page = SdCardReplayExtPage(driver)
         self.home_page.ensure_back_to_home()
 
@@ -36,37 +44,51 @@ class TestSdCardRetrieval:
         # 每次用例开始时初始化备注，供 conftest.py 写入 Excel
         self.result_remark = ""
 
-        # ---- 步骤 1：切换常电模式 ----
-        with allure.step("切换设备工作模式为常电模式"):
+                # ---- 步骤 1：AOV 设备切换至常电模式 ----
+        if config.DEVICE_WORK_MODE.strip().upper() == "AOV":
+            with allure.step("AOV 设备切换工作模式为常电模式"):
+                assert self.home_page.click_play_button(device_name), \
+                    "点击播放按钮失败，未进入 Live 页面"
+                assert self.live_page.wait_for_stream_loaded(), \
+                    "Live 预览未能正常出图"
+                assert self.live_page.click_settings_gear(), \
+                    "点击设置齿轮失败"
+                assert self.settings_page.click_work_mode_entry(), \
+                    "点击工作模式入口失败"
+                assert self.work_mode_page.select_mode("常电模式"), \
+                    "切换常电模式失败"
+
+                self.work_mode_page.click_back_to_settings()
+                self.settings_page.click_back_to_live()
+                self.live_page.click_back_to_home()
+                assert self.home_page.ensure_back_to_home(), \
+                    "未能返回设备首页"
+                time.sleep(2)
+        else:
+            print("[Test] 常电设备不提供工作模式入口，跳过模式切换")
+
+
+
+        with allure.step("从 Live 页面进入回看界面"):
             assert self.home_page.click_play_button(device_name), \
                 "点击播放按钮失败，未进入 Live 页面"
             assert self.live_page.wait_for_stream_loaded(), \
                 "Live 预览未能正常出图"
-            assert self.live_page.click_settings_gear(), \
-                "点击设置齿轮失败"
-            assert self.settings_page.click_work_mode_entry(), \
-                "点击工作模式入口失败"
-            assert self.work_mode_page.select_mode("常电模式"), \
-                "切换常电模式失败"
+            assert self.live_page.click_replay(), \
+                "点击回看入口失败"
+            assert self.cloud_page.wait_until(
+                self.cloud_page.is_on_cloud_replay_page,
+                timeout=10
+            ), "未能进入云回看界面"
 
-            self.work_mode_page.click_back_to_settings()
-            self.settings_page.click_back_to_live()
-            self.live_page.click_back_to_home()
-            assert self.home_page.ensure_back_to_home(), \
-                "未能返回设备首页"
-            time.sleep(2)
+        with allure.step("从云回看界面切换到 SD 卡回看"):
+            assert self.cloud_page.click_sdcard_playback(), \
+                "点击 SD 卡图标失败"
+            assert self.sdcard_ext_page.wait_until(
+                self.sdcard_ext_page.is_on_sdcard_replay_page,
+                timeout=10
+            ), "未能进入 SD 卡回看界面"
 
-        # ---- 步骤 2：进入卡回看页面 ----
-        with allure.step("从首页进入 Live 预览"):
-            assert self.home_page.click_play_button(device_name), \
-                "点击播放按钮失败，未进入 Live 页面"
-            assert self.live_page.wait_for_stream_loaded(), \
-                "Live 预览未能正常出图"
-
-        with allure.step("进入卡回看页面"):
-            assert self.live_page.click_card_playback(), \
-                "点击卡回放按钮失败"
-            time.sleep(1.5)
 
         # 没有任何 SD 卡录像时，整条检索用例跳过
         if not self.sdcard_ext_page.has_sd_card_video():
@@ -181,8 +203,6 @@ class TestSdCardRetrieval:
                     f"备注：{self.result_remark}"
                 )
 
-        # ---- 步骤 4: 回到首页 ----
         with allure.step("返回首页"):
-            self.sdcard_ext_page.click_back_to_live()
-            self.live_page.click_back_to_home()
-            self.home_page.ensure_back_to_home()
+            assert self.home_page.ensure_back_to_home(), \
+                "未能从 SD 卡回看界面返回首页"

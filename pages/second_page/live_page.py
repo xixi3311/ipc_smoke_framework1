@@ -124,14 +124,19 @@ class LivePage(BasePage):
             retries=3
         )
 
-    def click_cloud_playback(self) -> bool:
-        """点击底部“云回放”按钮"""
-        print("[LivePage] 点击底部 '云回放' 按钮")
+    def click_replay(self) -> bool:
+        """点击 Live 页面底部的“回放”入口"""
+        print("[LivePage] 点击底部 '回放' 按钮")
         return self.safe_click(
-            LiveLocators.TV_CLOUD_PLAYBACK,
+            LiveLocators.TV_REPLAY,
             auto_scroll=False,
             retries=3
         )
+
+    def click_cloud_playback(self) -> bool:
+        """兼容旧接口，点击底部“回放”入口"""
+        return self.click_replay()
+
 
     def click_back_to_home(self) -> bool:
         """从 Live 预览页返回 APP 首页"""

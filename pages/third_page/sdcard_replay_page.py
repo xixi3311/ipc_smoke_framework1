@@ -6,12 +6,14 @@ from locators.third_page_locator.sdcard_replay_locator import SdCardReplayLocato
 
 
 class SdCardReplayPage(BasePage):
-    """卡回看页面类 (UI2/UI3)"""
+    """新版 SD 卡回看主页面"""
 
     def is_on_sdcard_replay_page(self) -> bool:
-        """根据时间轴和放大缩小按钮判断是否进入卡回看界面"""
-        return self._is_element_present(*SdCardReplayLocators.TIME_RULER) or \
-            self._is_element_present(*SdCardReplayLocators.BTN_ZOOM_IN)
+        """通过卡回看根节点和时间轴识别页面"""
+        return self._is_element_present(
+            *SdCardReplayLocators.CARD_REPLAY_ROOT
+        ) or self._is_element_present(*SdCardReplayLocators.TIME_RULER)
+
 
     def wait_for_stream_loaded(self, timeout: int = getattr(config, 'PREVIEW_TIMEOUT', 30)) -> bool:
         """【兼容旧接口】判定卡回看是否成功出图"""
@@ -46,6 +48,7 @@ class SdCardReplayPage(BasePage):
         return False, total_duration
 
     def click_back_to_live(self) -> bool:
-        """从卡回看页退回 Live 页"""
-        print("[SdCardReplay] 点击返回按钮退回 Live 界面...")
+        """从卡回看页返回上一级回看界面"""
+        print("[SdCardReplay] 点击返回按钮离开卡回看界面...")
+
         return self.safe_click(SdCardReplayLocators.BTN_BACK, auto_scroll=False)

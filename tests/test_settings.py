@@ -1,7 +1,9 @@
 import time
 import allure
 import pytest
+import config
 from pages.first_page.home_page import HomePage
+
 from pages.second_page.live_page import LivePage
 from pages.third_page.setting_page import SettingsPage
 
@@ -42,6 +44,9 @@ class TestDeviceSettings:
     @pytest.mark.smoke
     def test_enter_work_mode_page(self):
         """测试在设置界面点击『工作模式』整行，能否正常进入 UI5 工作模式选择页"""
+        if config.DEVICE_WORK_MODE.strip().upper() != "AOV":
+            pytest.skip("常电设备不提供工作模式入口")
+
         with allure.step(f"进入 [{self.TARGET_DEVICE}] Live 预览并跳转至设置页"):
             self.home_page.click_play_button(self.TARGET_DEVICE)
             self.live_page.wait_for_stream_loaded()

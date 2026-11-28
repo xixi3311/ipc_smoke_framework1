@@ -6,10 +6,26 @@ from locators.third_page_locator.cloud_replay_locator import CloudReplayLocators
 
 
 class CloudReplayPage(BasePage):
-    """云回看页面类 (UI4 事件列表 / UI5 云视频播放)"""
+    """云回看页面类"""
+
+    def is_on_cloud_replay_page(self) -> bool:
+        """校验是否进入云回看主界面"""
+        return self._is_element_present(
+            'id', f'{config.APP_PACKAGE}:id/cloudPlayWindow'
+        ) or self._is_element_present(
+            *CloudReplayLocators.TV_CLOUD_NOT_ACTIVATED
+        )
+
+    def click_sdcard_playback(self) -> bool:
+        """从云回看界面切换到 SD 卡回看"""
+        print("[CloudReplayPage] 点击 SD 卡图标切换到卡回看...")
+        return self.safe_click(
+            CloudReplayLocators.BTN_SDCARD_PLAYBACK,
+            auto_scroll=False
+        )
 
     def is_on_cloud_list_page(self) -> bool:
-        """校验是否处于云回看事件列表界面 (UI4)"""
+        """校验是否处于云回看事件列表界面"""
         return self._is_element_present(*CloudReplayLocators.RECYCLER_EVENT_LIST) or \
                self._is_element_present(*CloudReplayLocators.TV_DATE)
 
